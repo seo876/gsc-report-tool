@@ -1,0 +1,1776 @@
+<title>GSC-Report-Generator</title>
+<meta name="description" content="GSC-Performance-Export hochladen und automatisch einen Google-Style-SEO-Bericht als PDF erzeugen">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,500;0,700;0,900;1,400&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    color-scheme: light;
+    --bg:            #f6f8fc;
+    --surface:        #ffffff;
+    --surface-2:      #f1f3f4;
+    --border:         #dadce0;
+    --ink-1:          #202124;
+    --ink-2:          #5f6368;
+    --ink-3:          #80868b;
+
+    --blue:           #2a78d6;
+    --blue-soft:      #e8f0fd;
+    --orange:         #eb6834;
+    --orange-soft:    #fdeee7;
+
+    --good:           #0ca30c;
+    --good-soft:      #e6f6e6;
+    --warn:           #b97600;
+    --warn-soft:      #fef2d9;
+    --warn-dot:       #fab219;
+    --critical:       #d03b3b;
+    --critical-soft:  #fbe7e7;
+
+    --g-blue:  #4285F4;
+    --g-red:   #EA4335;
+    --g-yellow:#FBBC05;
+    --g-green: #34A853;
+
+    --shadow-1: 0 1px 2px 0 rgba(60,64,67,.15), 0 1px 3px 1px rgba(60,64,67,.10);
+    --shadow-2: 0 1px 3px 0 rgba(60,64,67,.20), 0 4px 8px 3px rgba(60,64,67,.10);
+    --radius: 12px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --bg:#131314; --surface:#1e1f20; --surface-2:#262729; --border:#3c4043;
+      --ink-1:#e8eaed; --ink-2:#c3c2b7; --ink-3:#9aa0a6;
+      --blue:#7cabf2; --blue-soft:#22314a; --orange:#f0925f; --orange-soft:#3a2a20;
+      --good:#57c257; --good-soft:#16341a; --warn:#f5c065; --warn-soft:#3a2f16; --warn-dot:#f5c065;
+      --critical:#f28b82; --critical-soft:#3a2020;
+      --shadow-1: 0 1px 2px 0 rgba(0,0,0,.4), 0 1px 3px 1px rgba(0,0,0,.3);
+      --shadow-2: 0 1px 3px 0 rgba(0,0,0,.5), 0 4px 8px 3px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --bg:#131314; --surface:#1e1f20; --surface-2:#262729; --border:#3c4043;
+    --ink-1:#e8eaed; --ink-2:#c3c2b7; --ink-3:#9aa0a6;
+    --blue:#7cabf2; --blue-soft:#22314a; --orange:#f0925f; --orange-soft:#3a2a20;
+    --good:#57c257; --good-soft:#16341a; --warn:#f5c065; --warn-soft:#3a2f16; --warn-dot:#f5c065;
+    --critical:#f28b82; --critical-soft:#3a2020;
+    --shadow-1: 0 1px 2px 0 rgba(0,0,0,.4), 0 1px 3px 1px rgba(0,0,0,.3);
+    --shadow-2: 0 1px 3px 0 rgba(0,0,0,.5), 0 4px 8px 3px rgba(0,0,0,.3);
+  }
+
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:var(--ink-1); font-family:"Roboto",Arial,system-ui,sans-serif; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1040px; margin:0 auto; padding:0 20px 64px;}
+
+  /* ---------- app shell: sidebar + main column (dashboard layout) ---------- */
+  .app-shell{display:flex; align-items:flex-start; min-height:100vh;}
+  .sidenav{
+    width:232px; flex:none; position:sticky; top:0; height:100vh; overflow-y:auto;
+    background:var(--surface); border-right:1px solid var(--border);
+    display:flex; flex-direction:column; padding:18px 14px 14px;
+  }
+  .sidenav-brand{display:flex; align-items:center; gap:10px; padding:4px 8px 18px;}
+  .sidenav-brand .name{font-size:14.5px; font-weight:500; color:var(--ink-1); line-height:1.25;}
+  .sidenav-brand .sub{font-size:11px; color:var(--ink-3);}
+  .sidenav-nav{display:flex; flex-direction:column; gap:2px;}
+  .nav-link{
+    display:flex; align-items:center; gap:10px; font-size:13px; font-weight:500; color:var(--ink-2);
+    text-decoration:none; padding:9px 12px; border-radius:8px; transition:background .12s, color .12s;
+  }
+  .nav-link svg{width:16px; height:16px; flex:none; opacity:.85;}
+  .nav-link:hover{background:var(--surface-2); color:var(--ink-1);}
+  .nav-link.active{background:var(--blue-soft); color:var(--blue);}
+  .sidenav-sep{height:1px; background:var(--border); margin:14px 4px;}
+  .sidenav-foot{margin-top:auto; padding-top:14px; display:flex; flex-direction:column; gap:10px; font-size:12px; color:var(--ink-2);}
+  .sidenav-foot-row{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+  .sidenav-foot select{width:100%; font-family:inherit; font-size:12px; padding:7px 8px; border-radius:7px; border:1px solid var(--border); background:var(--surface); color:var(--ink-1);}
+  .sidenav-foot .btn{flex:1;}
+
+  .main-col{flex:1; min-width:0;}
+
+  .welcome-bar{
+    position:sticky; top:0; z-index:20;
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    padding:14px 24px; background:var(--blue); color:#fff;
+  }
+  .welcome-bar .wtext{font-size:15px; font-weight:400;}
+  .welcome-bar .wtext b{font-weight:700;}
+  .welcome-bar-actions{margin-left:auto; display:flex; gap:8px; flex-wrap:wrap;}
+  .welcome-bar .btn{background:rgba(255,255,255,.14); border-color:rgba(255,255,255,.3); color:#fff;}
+  .welcome-bar .btn:hover{background:rgba(255,255,255,.22);}
+  .welcome-bar .btn.primary{background:#fff; border-color:#fff; color:var(--blue);}
+  .welcome-bar .btn.primary:hover{background:#f2f6fd;}
+
+  .g-dot{width:22px;height:22px;border-radius:50%;flex:none;
+    background:conic-gradient(var(--g-blue) 0 25%, var(--g-red) 25% 50%, var(--g-yellow) 50% 75%, var(--g-green) 75% 100%);
+  }
+  .topbar-text{font-size:14px; color:var(--ink-2);}
+  .topbar-text b{color:var(--ink-1); font-weight:500;}
+
+  /* ---------- KPI dashboard row (tiles + side panel) ---------- */
+  .dash-row{display:grid; grid-template-columns:2.2fr 1fr; gap:14px; align-items:stretch;}
+  @media (max-width:900px){.dash-row{grid-template-columns:1fr;}}
+  .kpi-icon{width:20px; height:20px; color:var(--blue); margin-bottom:8px;}
+  .next-steps{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px 20px; box-shadow:var(--shadow-1);}
+  .next-steps h3{margin:0 0 12px; font-size:13.5px; font-weight:500;}
+  .next-steps ul{margin:0; padding-left:18px; font-size:12.5px; color:var(--ink-1); line-height:1.65;}
+  .next-steps li{margin-bottom:9px;}
+  .next-steps li:last-child{margin-bottom:0;}
+
+  .btn{
+    display:inline-flex; align-items:center; gap:7px; font-family:inherit; font-size:13px; font-weight:500;
+    padding:8px 14px; border-radius:8px; border:1px solid var(--border); background:var(--surface);
+    color:var(--ink-1); cursor:pointer; white-space:nowrap;
+  }
+  .btn:hover{background:var(--surface-2);}
+  .btn svg{width:15px;height:15px;flex:none;}
+  .btn.primary{background:var(--blue); border-color:var(--blue); color:#fff;}
+  .btn.primary:hover{filter:brightness(1.06);}
+  .btn.small{padding:6px 10px; font-size:12px;}
+  input[type=file]{display:none;}
+
+  /* ---------- setup / upload ---------- */
+  #view-setup{max-width:640px; margin:48px auto 0; padding:0 20px;}
+  .drop{
+    background:var(--surface); border:2px dashed var(--border); border-radius:16px;
+    padding:40px 24px; text-align:center; cursor:pointer; transition:border-color .15s, background .15s;
+  }
+  .drop.drag{border-color:var(--blue); background:var(--blue-soft);}
+  .drop-icon{width:44px; height:44px; margin:0 auto 14px; color:var(--blue);}
+  .drop h2{margin:0 0 6px; font-size:17px; font-weight:500;}
+  .drop p{margin:0; font-size:13px; color:var(--ink-2);}
+  .drop .or{margin:16px 0 6px; font-size:12px; color:var(--ink-3);}
+  .setup-note{
+    margin-top:18px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    padding:16px 18px; font-size:12.5px; color:var(--ink-2); line-height:1.6;
+  }
+  .setup-note b{color:var(--ink-1); font-weight:500;}
+  .setup-error{
+    margin-top:14px; background:var(--critical-soft); border:1px solid var(--critical); color:var(--critical);
+    border-radius:10px; padding:12px 14px; font-size:13px; display:none;
+  }
+
+  /* ---------- banner ---------- */
+  .banner{
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    background:var(--warn-soft); color:var(--warn); border:1px solid var(--warn);
+    border-radius:10px; padding:10px 14px; font-size:12.5px; margin:18px 0 0;
+  }
+  .banner b{font-weight:600;}
+  .banner .btn{margin-left:auto;}
+
+  /* ---------- hero ---------- */
+  .hero{margin-top:24px; padding:32px 32px 28px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow-1);}
+  .eyebrow{display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:500; letter-spacing:.6px; text-transform:uppercase; color:var(--blue); background:var(--blue-soft); padding:4px 10px; border-radius:100px;}
+  h1{font-size:clamp(24px,4vw,32px); line-height:1.2; margin:16px 0 6px; font-weight:400; text-wrap:balance;}
+  h1 b{font-weight:700;}
+  [contenteditable]{outline:none; border-bottom:1px dashed transparent; border-radius:3px;}
+  [contenteditable]:hover{border-bottom-color:var(--border);}
+  [contenteditable]:focus{border-bottom-color:var(--blue); background:var(--blue-soft);}
+  [contenteditable]:empty:before{content:attr(data-placeholder); color:var(--ink-3);}
+  .hero-sub{color:var(--ink-2); font-size:15px; margin:0;}
+  .hero-meta{display:flex; flex-wrap:wrap; gap:24px; margin-top:22px; padding-top:20px; border-top:1px solid var(--border);}
+  .hero-meta div{font-size:13px; color:var(--ink-3);}
+  .hero-meta strong{display:block; font-size:14px; color:var(--ink-1); font-weight:500; margin-top:2px;}
+
+  .section{margin-top:36px;}
+  .section-head{display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:14px; flex-wrap:wrap;}
+  .section-head h2{font-size:19px; font-weight:500; margin:0;}
+  .section-head p{margin:2px 0 0; font-size:13px; color:var(--ink-2);}
+
+  .card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px 20px; box-shadow:var(--shadow-1);}
+  .card h3{margin:0 0 14px; font-size:13.5px; font-weight:500;}
+  .summary-card p{margin:0 0 14px; font-size:14.5px; line-height:1.65; color:var(--ink-1); max-width:74ch;}
+  .summary-card p:last-child{margin-bottom:0;}
+
+  .kpi-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:14px;}
+  @media (max-width:760px){.kpi-grid{grid-template-columns:repeat(2,1fr);}}
+  .kpi{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px 18px 16px; box-shadow:var(--shadow-1); position:relative; overflow:hidden;}
+  .kpi .bar{position:absolute; top:0; left:0; right:0; height:3px;}
+  .kpi-label{font-size:12.5px; color:var(--ink-2); font-weight:500;}
+  .kpi-value{font-family:"Roboto Mono",monospace; font-weight:700; font-size:30px; letter-spacing:-.5px; margin-top:8px; font-variant-numeric:tabular-nums;}
+  .kpi-delta{display:inline-flex; align-items:center; gap:4px; font-size:12.5px; font-weight:500; margin-top:8px;}
+  .kpi-delta.up{color:var(--good);} .kpi-delta.down{color:var(--critical);} .kpi-delta.flat{color:var(--ink-3);}
+  .kpi-delta svg{width:12px;height:12px;}
+  .kpi-note{font-size:11.5px; color:var(--ink-3); margin-top:2px;}
+
+  .chart-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:14px;}
+  @media (max-width:860px){.chart-grid{grid-template-columns:1fr;}}
+  .chart-card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px 18px 8px; box-shadow:var(--shadow-1);}
+  .chart-title{display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:500;}
+  .chart-title .sw{width:10px;height:10px;border-radius:3px;flex:none;}
+  .chart-current{font-family:"Roboto Mono",monospace; font-weight:700; font-size:22px; margin-top:6px; font-variant-numeric:tabular-nums;}
+  .chart-current span{font-family:"Roboto",sans-serif; font-weight:400; font-size:12.5px; color:var(--ink-3); margin-left:6px;}
+  .chart-svg-wrap{position:relative; margin-top:6px;}
+  svg.chart{width:100%; height:auto; display:block; overflow:visible;}
+  .gridline{stroke:var(--border); stroke-width:1;}
+  .axis-label{fill:var(--ink-3); font-size:9.5px; font-family:"Roboto Mono",monospace;}
+  .x-label{fill:var(--ink-3); font-size:9px; font-family:"Roboto",sans-serif;}
+  .area-fill{opacity:.14;}
+  .line-path{fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;}
+  .line-path.partial{stroke-dasharray:3 3; opacity:.55;}
+  .end-dot{stroke:var(--surface); stroke-width:2;}
+  .hover-dot{fill:var(--surface); stroke-width:2; opacity:0; pointer-events:none;}
+  .crosshair{stroke:var(--ink-3); stroke-width:1; stroke-dasharray:2 3; opacity:0; pointer-events:none;}
+  .tooltip{position:absolute; pointer-events:none; background:var(--ink-1); color:var(--bg); font-size:11.5px; padding:6px 9px; border-radius:6px; transform:translate(-50%,-115%); white-space:nowrap; opacity:0; transition:opacity .08s ease; z-index:5; font-family:"Roboto Mono",monospace;}
+
+  .strip{display:grid; grid-template-columns:1.1fr 1fr; gap:14px;}
+  @media (max-width:760px){.strip{grid-template-columns:1fr;}}
+  .bars{display:flex; flex-direction:column; gap:12px;}
+  .bar-row{display:grid; grid-template-columns:78px 1fr 44px; align-items:center; gap:10px; font-size:12.5px;}
+  .bar-row .lbl{color:var(--ink-2);}
+  .bar-track{height:8px; border-radius:5px; background:var(--surface-2); overflow:hidden;}
+  .bar-fill{height:100%; border-radius:5px;}
+  .bar-row .val{text-align:right; font-family:"Roboto Mono",monospace; font-variant-numeric:tabular-nums; color:var(--ink-1);}
+  .mini-kv{display:flex; justify-content:space-between; font-size:12.5px; padding:7px 0; border-bottom:1px dashed var(--border);}
+  .mini-kv:last-child{border-bottom:none;}
+  .mini-kv b{font-family:"Roboto Mono",monospace; font-variant-numeric:tabular-nums; font-weight:500;}
+
+  .table-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  @media (max-width:860px){.table-grid{grid-template-columns:1fr;}}
+  table{width:100%; border-collapse:collapse; font-size:13px;}
+  thead th{text-align:left; font-weight:500; color:var(--ink-2); font-size:11px; text-transform:uppercase; letter-spacing:.4px; padding:0 4px 10px; border-bottom:1px solid var(--border);}
+  thead th.num, td.num{text-align:right;}
+  tbody td{padding:10px 4px; border-bottom:1px solid var(--surface-2); vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:none;}
+  td.num{font-family:"Roboto Mono",monospace; font-variant-numeric:tabular-nums;}
+  .q{font-weight:500;}
+  .chip{display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:500; padding:3px 9px; border-radius:100px;}
+  .chip.good{background:var(--good-soft); color:var(--good);}
+  .chip.warn{background:var(--warn-soft); color:var(--warn);}
+  .chip .dot{width:6px;height:6px;border-radius:50%;}
+  .chip.good .dot{background:var(--good);}
+  .chip.warn .dot{background:var(--warn-dot);}
+  .chip.bad{background:var(--critical-soft); color:var(--critical);}
+  .chip.bad .dot{background:var(--critical);}
+  .table-note{font-size:12px; color:var(--ink-2); margin:0 0 14px; line-height:1.5;}
+  .empty-hint{font-size:12.5px; color:var(--ink-3); padding:8px 0;}
+
+  /* ---------- position bands / brand split ---------- */
+  .band-row{display:grid; grid-template-columns:110px 1fr 74px; align-items:center; gap:10px; font-size:12.5px; margin-bottom:10px;}
+  .band-row:last-child{margin-bottom:0;}
+  .band-row .lbl{color:var(--ink-2);}
+  .band-row .val{text-align:right; font-family:"Roboto Mono",monospace; font-variant-numeric:tabular-nums;}
+  .split-compare{display:flex; flex-direction:column; gap:14px;}
+  .split-row{}
+  .split-row .split-head{display:flex; justify-content:space-between; font-size:12.5px; margin-bottom:6px;}
+  .split-row .split-head b{font-family:"Roboto Mono",monospace; font-variant-numeric:tabular-nums;}
+
+  /* ---------- briefing keywords / regional suggestions ---------- */
+  .kwbox{width:100%; min-height:90px; resize:vertical; font-family:inherit; font-size:12.5px; padding:10px 12px; border-radius:8px; border:1px solid var(--border); background:var(--surface); color:var(--ink-1); line-height:1.5;}
+  .field-row{display:flex; gap:12px; flex-wrap:wrap; margin-top:2px;}
+  .field-input{width:100%; font-family:inherit; font-size:12.5px; padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:var(--surface); color:var(--ink-1);}
+  .field-label{font-size:11px; color:var(--ink-3); text-transform:uppercase; letter-spacing:.4px; margin:0 0 4px;}
+  .kw-chips{display:flex; flex-wrap:wrap; gap:8px; margin-top:12px;}
+  .kw-chip{display:inline-flex; align-items:center; gap:6px; font-size:12px; padding:5px 11px; border-radius:100px; border:1px solid var(--border); background:var(--surface-2); color:var(--ink-2);}
+  .kw-chip.have{background:var(--good-soft); color:var(--good); border-color:transparent;}
+  .kw-chip.new{background:var(--warn-soft); color:var(--warn); border-color:transparent;}
+  .kw-chip small{font-family:"Roboto Mono",monospace; opacity:.8;}
+  .kw-chip small[data-domain-del]{opacity:1; padding-left:2px;}
+
+  .trend{display:inline-flex; align-items:center; gap:3px; font-family:"Roboto Mono",monospace; font-size:11.5px; font-weight:500;}
+  .trend.up{color:var(--good);} .trend.down{color:var(--critical);} .trend.flat{color:var(--ink-3);}
+  .trend svg{width:11px;height:11px;}
+
+  /* ---------- toolbar branding / profiles ---------- */
+  .subbar{
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:8px 20px;
+    border-bottom:1px solid var(--border); background:var(--surface); font-size:12.5px; color:var(--ink-2);
+  }
+  .subbar select{font-family:inherit; font-size:12.5px; padding:6px 8px; border-radius:7px; border:1px solid var(--border); background:var(--surface); color:var(--ink-1);}
+  .swatch-row{display:flex; align-items:center; gap:6px;}
+  .swatch{width:18px; height:18px; border-radius:50%; border:2px solid transparent; cursor:pointer; padding:0;}
+  .swatch.active{border-color:var(--ink-1);}
+  .logo-thumb{height:22px; max-width:90px; object-fit:contain; border-radius:4px;}
+  .subbar-sep{width:1px; height:18px; background:var(--border); flex:none;}
+  .hero-logo{height:34px; max-width:160px; object-fit:contain; margin-bottom:14px;}
+
+  /* ---------- client tabs (batch) ---------- */
+  .tabbar{display:flex; gap:6px; flex-wrap:wrap; margin-top:22px;}
+  .tab{
+    font-family:inherit; font-size:12.5px; font-weight:500; padding:7px 13px; border-radius:100px;
+    border:1px solid var(--border); background:var(--surface); color:var(--ink-2); cursor:pointer;
+  }
+  .tab.active{background:var(--blue); border-color:var(--blue); color:#fff;}
+
+  /* ---------- compare-period control ---------- */
+  .compare-row{
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:10px;
+    font-size:12.5px; color:var(--ink-2);
+  }
+  .compare-tag{display:inline-flex; align-items:center; gap:8px; background:var(--blue-soft); color:var(--blue); border-radius:100px; padding:5px 12px;}
+  .compare-tag button{border:none; background:none; color:inherit; cursor:pointer; font-size:14px; line-height:1; padding:0;}
+
+  footer{margin-top:44px; padding-top:20px; border-top:1px solid var(--border); display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; font-size:11.5px; color:var(--ink-3);}
+
+  [hidden]{display:none!important;}
+
+  @media print{
+    body{background:#fff;}
+    .sidenav,.welcome-bar-actions,.banner,.tabbar,.compare-row,#btn-add-compare,#view-setup,#round-add-form,#btn-suggest-update,#f-domain-add,#btn-domain-add{display:none!important;}
+    .app-shell{display:block;}
+    .main-col{width:100%;}
+    .welcome-bar{position:static; background:#fff!important; color:var(--ink-1)!important; padding:0 0 8px; border-bottom:1px solid var(--border);}
+    [contenteditable]{border-bottom:none!important;}
+    .wrap{max-width:100%; padding:0 6px 20px;}
+    .hero,.kpi,.chart-card,.card,.summary-card,.next-steps{box-shadow:none; break-inside:avoid; page-break-inside:avoid;}
+    .section{break-inside:avoid; page-break-inside:avoid;}
+    .dash-row{grid-template-columns:2.2fr 1fr; break-inside:avoid; page-break-inside:avoid;}
+    .kpi-grid{grid-template-columns:repeat(3,1fr); break-inside:avoid; page-break-inside:avoid;}
+    .chart-grid{grid-template-columns:repeat(3,1fr); break-inside:avoid; page-break-inside:avoid;}
+    .table-grid{grid-template-columns:1fr 1fr;}
+    .strip{grid-template-columns:1.1fr 1fr;}
+    [contenteditable="true"]:empty::before{content:none;}
+    .kwbox,.field-input{border:none!important; padding:0!important; background:transparent!important; resize:none!important; min-height:auto!important;}
+    [data-round-del]{display:none!important;}
+  }
+</style>
+
+<div class="app-shell">
+
+  <aside class="sidenav">
+    <div class="sidenav-brand">
+      <div class="g-dot"></div>
+      <div><div class="name">Search Console</div><div class="sub">Report-Generator</div></div>
+    </div>
+    <nav class="sidenav-nav" id="sidenav-nav">
+      <a class="nav-link" href="#sec-overview">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+        Übersicht
+      </a>
+      <a class="nav-link" href="#sec-visibility">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        Sichtbarkeit &amp; Marke
+      </a>
+      <a class="nav-link" href="#sec-queries">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        Suchanfragen
+      </a>
+      <a class="nav-link" href="#sec-keywords">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20l9-16H3z"/><path d="M12 20V9"/></svg>
+        Vereinbarte Keywords
+      </a>
+      <a class="nav-link" href="#sec-pages">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+        Seiten &amp; CTR
+      </a>
+    </nav>
+
+    <div class="sidenav-foot" id="subbar">
+      <div class="sidenav-sep"></div>
+      <span>Branding</span>
+      <div class="swatch-row" id="swatch-row"></div>
+      <div class="sidenav-foot-row">
+        <button class="btn small" id="btn-logo">Logo hochladen</button>
+        <img id="logo-preview" class="logo-thumb" hidden>
+        <input type="file" id="logo-input" accept="image/*">
+      </div>
+      <div class="sidenav-sep"></div>
+      <span>Kundenprofil</span>
+      <select id="profile-select"><option value="">– neu –</option></select>
+      <div class="sidenav-foot-row">
+        <button class="btn small" id="btn-profile-save">Speichern</button>
+        <button class="btn small" id="btn-profile-delete">Löschen</button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main-col">
+
+    <div class="welcome-bar">
+      <div class="wtext" id="welcome-text">Willkommen zurück<span id="welcome-name"></span>!</div>
+      <div class="welcome-bar-actions">
+        <button class="btn small" id="btn-new">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6h6M20 20v-6h-6"/><path d="M20 10a8 8 0 0 0-14.3-4.6M4 14a8 8 0 0 0 14.3 4.6"/></svg>
+          Neue Datei
+        </button>
+        <button class="btn small primary" id="btn-print">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-5a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1h-2M6 14h12v7H6z"/></svg>
+          Als PDF exportieren
+        </button>
+      </div>
+    </div>
+
+    <div class="wrap">
+
+  <!-- ======================= SETUP ======================= -->
+  <div id="view-setup" hidden>
+    <div class="drop" id="dropzone">
+      <svg class="drop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+      <h2>GSC-Performance-Export hochladen</h2>
+      <p>.xlsx-Datei hier ablegen oder klicken zum Auswählen</p>
+      <div class="or">— oder —</div>
+      <button class="btn" type="button" id="btn-browse">Datei auswählen</button>
+      <input type="file" id="file-input" accept=".xlsx,.xls" multiple>
+    </div>
+    <div class="setup-error" id="setup-error"></div>
+    <div class="setup-note">
+      <b>Erwartetes Format:</b> Google-Search-Console-Performance-Export (.xlsx) mit den Reitern
+      <b>Diagramm</b> (Tages- oder Monatswerte), <b>Suchanfragen</b>, optional <b>Geräte</b>, <b>Länder</b> und <b>Seiten</b> –
+      wie er direkt aus der Search Console exportiert wird. Es passiert nichts mit der Datei außer im Browser:
+      die Auswertung läuft lokal, es wird nichts hochgeladen. Mehrere Dateien auf einmal auswählen, um
+      mehrere Kunden nacheinander als Reports durchzugehen.
+    </div>
+  </div>
+
+  <!-- ======================= REPORT ======================= -->
+  <div id="view-report" hidden>
+
+    <div class="banner" id="sample-banner">
+      <span>📎 <b>Beispieldaten</b> (dr-braunsteiner.de) – lade deine eigene Search-Console-Datei hoch, um deinen Bericht zu erzeugen.</span>
+      <button class="btn small" id="btn-load-own">Eigene Datei laden</button>
+    </div>
+
+    <div class="tabbar" id="tabbar" hidden></div>
+
+    <div class="hero" id="sec-overview">
+      <span class="eyebrow">SEO-Bericht</span>
+      <img class="hero-logo" id="hero-logo" hidden>
+      <h1>Sichtbarkeits-Report für <b contenteditable="true" id="f-website">dr-braunsteiner.de</b></h1>
+      <p class="hero-sub" contenteditable="true" id="f-client" data-placeholder="Kundenname eintragen">Zahnarztpraxis Dr. Braunsteiner · Essen-Rüttenscheid</p>
+      <div class="hero-meta">
+        <div>Zeitraum<strong id="f-period">–</strong></div>
+        <div>Datenquelle<strong>Google Search Console</strong></div>
+        <div>Erstellt am<strong id="f-date">–</strong></div>
+        <div>Erstellt von<strong contenteditable="true" id="f-author">SELLWERK SEO-Team</strong></div>
+        <div>Markenbegriff<strong contenteditable="true" id="f-brand">braunsteiner</strong></div>
+      </div>
+      <div class="compare-row" id="compare-row">
+        <button class="btn small" id="btn-add-compare">+ Vorperiode zum Vergleich hochladen</button>
+        <input type="file" id="compare-input" accept=".xlsx,.xls">
+        <span id="compare-tag-slot"></span>
+      </div>
+      <div class="compare-row" id="domains-row" style="margin-top:6px;">
+        <span style="color:var(--ink-3); font-size:12.5px;">Weitere Standorte/Domains dieses Kunden:</span>
+        <span id="domains-chips" class="kw-chips" style="margin-top:0;"></span>
+        <input type="text" class="field-input" id="f-domain-add" placeholder="weitere-domain.de" style="width:170px;">
+        <button class="btn small" type="button" id="btn-domain-add">+ Hinzufügen</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head"><h2>Was unsere SEO-Maßnahmen bewirkt haben</h2></div>
+      <div class="card summary-card" id="narrative"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <h2>Auf einen Blick</h2>
+        <p id="kpi-period-note">Gesamtzeitraum</p>
+      </div>
+      <div class="dash-row">
+        <div class="kpi-grid" id="kpi-grid"></div>
+        <div class="next-steps">
+          <h3>Empfehlungen für die nächste Runde</h3>
+          <ul id="next-steps-list"></ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <h2 id="trend-title">Entwicklung pro Woche</h2>
+        <p id="trend-note"></p>
+      </div>
+      <div class="chart-grid" id="chart-grid"></div>
+    </div>
+
+    <div class="section" id="sec-visibility">
+      <div class="section-head">
+        <h2>Sichtbarkeit &amp; Marke</h2>
+        <p>Basis: erfasste Suchanfragen im Export</p>
+      </div>
+      <div class="strip">
+        <div class="card">
+          <h3>Sichtbarkeit nach Position</h3>
+          <div id="position-bands"></div>
+        </div>
+        <div class="card">
+          <h3>Marke vs. Nicht-Marke</h3>
+          <div class="split-compare" id="brand-split"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head"><h2>Monatsübersicht &amp; Kanäle</h2></div>
+      <div class="strip">
+        <div class="card">
+          <h3>Klicks &amp; Impressionen pro Monat</h3>
+          <table>
+            <thead><tr><th>Monat</th><th class="num">Klicks</th><th class="num">Impr.</th><th class="num">Ø Pos.</th></tr></thead>
+            <tbody id="month-table-body"></tbody>
+          </table>
+          <p class="table-note" style="margin-top:12px;" id="month-footnote">* Teilmonat, nicht vollständig im Exportzeitraum enthalten.</p>
+        </div>
+        <div class="card">
+          <h3>Gerät &amp; Herkunft</h3>
+          <div class="bars" id="device-bars"></div>
+          <div style="margin-top:16px; padding-top:14px; border-top:1px solid var(--border);" id="device-kv"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" id="sec-queries">
+      <div class="section-head"><h2>Suchanfragen im Detail</h2></div>
+      <div class="table-grid">
+        <div class="card">
+          <h3><span class="chip good"><span class="dot"></span>Läuft bereits stark</span></h3>
+          <p class="table-note">Diese Begriffe ranken bereits auf Seite 1 und bringen zuverlässig Klicks.</p>
+          <table>
+            <thead><tr><th>Suchanfrage</th><th class="num">Klicks</th><th class="num">Impr.</th><th class="num">Ø Pos.</th></tr></thead>
+            <tbody id="strong-table-body"></tbody>
+          </table>
+        </div>
+        <div class="card">
+          <h3><span class="chip warn"><span class="dot"></span>Potenzial für mehr Klicks</span></h3>
+          <p class="table-note">Hohe Sichtbarkeit, aber Ranking noch außerhalb Seite 1 – größter kurzfristiger Hebel.</p>
+          <table>
+            <thead><tr><th>Suchanfrage</th><th class="num">Klicks</th><th class="num">Impr.</th><th class="num">Ø Pos.</th></tr></thead>
+            <tbody id="potential-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" id="sec-keywords">
+      <div class="section-head">
+        <h2>Vereinbarte Keywords &amp; Empfehlungen</h2>
+        <p>Abgleich mit dem Kunden-Briefing · Ideen für neue Inhalte</p>
+      </div>
+      <div class="table-grid">
+        <div class="card">
+          <h3>Briefing-Keywords im Vergleich</h3>
+          <p class="table-note">Mit dem Kunden abgesprochene Keywords, eingetragen in datierten Runden (z. B. pro Quartal). Ältere Runden bleiben erhalten, wenn neue dazukommen. Der Abgleich mit den Suchanfragen läuft automatisch, und die Einordnung berücksichtigt, wie lange ein Keyword schon eingetragen ist.</p>
+          <div id="rounds-list"></div>
+          <div id="round-add-form" style="border-top:1px solid var(--border); margin-top:6px; padding-top:14px;">
+            <div class="field-row">
+              <div>
+                <div class="field-label">Bezeichnung der Runde</div>
+                <input type="text" class="field-input" id="f-round-label" placeholder="z. B. Q3 2026">
+              </div>
+              <div>
+                <div class="field-label">Datum</div>
+                <input type="date" class="field-input" id="f-round-date">
+              </div>
+            </div>
+            <div class="field-label" style="margin-top:10px;">Keywords (ein Keyword pro Zeile)</div>
+            <textarea class="kwbox" id="f-round-keywords" rows="4" placeholder="Zahnarzt Essen&#10;Implantologie"></textarea>
+            <div style="margin-top:8px;"><button class="btn small" type="button" id="btn-round-add">+ Runde hinzufügen</button></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Empfohlene regionale Keywords</h3>
+          <p class="table-note">Kombination aus Leistungen und Region nach gängigen Local-SEO-Mustern – als Content-Ideen, nicht als garantiertes Suchvolumen.</p>
+          <div class="field-row">
+            <div>
+              <div class="field-label">Region</div>
+              <input type="text" class="field-input" id="f-region" placeholder="z. B. Essen-Rüttenscheid">
+            </div>
+            <div>
+              <div class="field-label">Leistungen (kommagetrennt)</div>
+              <input type="text" class="field-input" id="f-services" placeholder="z. B. Zahnarzt, Implantologie, Zahnersatz">
+            </div>
+          </div>
+          <div style="margin-top:8px;"><button class="btn small" type="button" id="btn-suggest-update">Vorschläge aktualisieren</button></div>
+          <p class="table-note" id="nearby-insight" style="margin-top:14px; display:none;"></p>
+          <div class="kw-chips" id="regional-suggestions"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" id="sec-pages">
+      <div class="section-head"><h2>Seiten &amp; CTR-Chancen</h2></div>
+      <div class="table-grid">
+        <div class="card">
+          <h3>Top-Landingpages</h3>
+          <p class="table-note">Welche Seiten bringen die Klicks.</p>
+          <table>
+            <thead><tr><th>Seite</th><th class="num">Klicks</th><th class="num">Impr.</th><th class="num">Ø Pos.</th></tr></thead>
+            <tbody id="pages-table-body"></tbody>
+          </table>
+        </div>
+        <div class="card">
+          <h3>CTR-Auffälligkeiten</h3>
+          <p class="table-note">CTR deutlich unter dem für die Position üblichen Wert – Title/Meta-Description prüfen.</p>
+          <table>
+            <thead><tr><th>Suchanfrage</th><th class="num">CTR</th><th class="num">Erwartet</th><th class="num">Ø Pos.</th></tr></thead>
+            <tbody id="ctr-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <div contenteditable="true" id="f-footer">SELLWERK / Websmart · SEO-Team</div>
+      <div id="f-source">Quelle: Google Search Console Performance-Export</div>
+    </footer>
+
+  </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ============================================================
+     0. UTIL
+  ============================================================ */
+  var deNum = function(v){ return Math.round(v).toLocaleString('de-DE'); };
+  var dePos = function(v){ return v.toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1}); };
+  var dePct = function(v){ return (v*100).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2}); };
+  var pad2 = function(n){ return n<10 ? '0'+n : ''+n; };
+  var MONTHS = ["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"];
+  var MONTHS_SHORT = ["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
+
+  function fmtDateDE(d){ return pad2(d.getUTCDate())+"."+pad2(d.getUTCMonth()+1)+"."+d.getUTCFullYear(); }
+  function fmtDateShort(d){ return pad2(d.getUTCDate())+"."+pad2(d.getUTCMonth()+1)+"."; }
+  function daysInMonth(y,m1to12){ return new Date(Date.UTC(y, m1to12, 0)).getUTCDate(); }
+  function utcDay(y,m0,d){ return new Date(Date.UTC(y,m0,d)); }
+
+  function parseISODateStr(s){
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s.trim());
+    if (!m) return null;
+    return utcDay(+m[1], +m[2]-1, +m[3]);
+  }
+  function toUTCDate(v){
+    if (v instanceof Date) return utcDay(v.getFullYear(), v.getMonth(), v.getDate());
+    if (typeof v === 'string') return parseISODateStr(v);
+    return null;
+  }
+
+  function isoWeekInfo(date){
+    var d = utcDay(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+    var dayNum = d.getUTCDay() || 7;
+    var monday = utcDay(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - (dayNum-1));
+    var thursday = utcDay(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + (4-dayNum));
+    var yearStart = utcDay(thursday.getUTCFullYear(),0,1);
+    var weekNo = Math.ceil((((thursday - yearStart)/86400000)+1)/7);
+    return {year:thursday.getUTCFullYear(), week:weekNo, monday:monday};
+  }
+
+  /* ============================================================
+     1. PARSE WORKBOOK
+  ============================================================ */
+  var SHEET_ALIASES = {
+    diagramm: ["Diagramm","Dates","Date"],
+    suchanfragen: ["Suchanfragen","Queries","Search queries","Top queries"],
+    geraete: ["Geräte","Devices"],
+    laender: ["Länder","Countries"],
+    seiten: ["Seiten","Pages"]
+  };
+  function findSheet(wb, key){
+    var names = SHEET_ALIASES[key];
+    for (var i=0;i<names.length;i++){
+      if (wb.SheetNames.indexOf(names[i]) !== -1) return wb.Sheets[names[i]];
+    }
+    return null;
+  }
+  function sheetRows(ws){
+    return XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:null});
+  }
+
+  function parseWorkbook(wb){
+    var diagWs = findSheet(wb,'diagramm');
+    if (!diagWs) throw new Error('Der Reiter "Diagramm" (bzw. "Dates") wurde nicht gefunden. Bitte einen Search-Console-Performance-Export hochladen.');
+    var diagRows = sheetRows(diagWs).filter(function(r){ return r && r.length && r[0]!=null; });
+    diagRows.shift(); // header
+
+    if (!diagRows.length) throw new Error('Der Reiter "Diagramm" enthält keine Datenzeilen.');
+
+    var mode = 'daily';
+    var firstVal = diagRows[0][0];
+    if (typeof firstVal === 'string' && firstVal.indexOf(' - ') !== -1) mode = 'monthly';
+
+    var dailyRows = [], monthlyRowsRaw = [];
+    if (mode === 'daily'){
+      diagRows.forEach(function(r){
+        var d = toUTCDate(r[0]);
+        if (!d) return;
+        dailyRows.push({date:d, clicks:+r[1]||0, impr:+r[2]||0, pos:+r[4]||0});
+      });
+      dailyRows.sort(function(a,b){ return a.date-b.date; });
+    } else {
+      diagRows.forEach(function(r){
+        var parts = String(r[0]).split(' - ');
+        var start = parseISODateStr(parts[0]), end = parts[1] ? parseISODateStr(parts[1]) : start;
+        if (!start) return;
+        monthlyRowsRaw.push({start:start, end:end||start, clicks:+r[1]||0, impr:+r[2]||0, pos:+r[4]||0});
+      });
+      monthlyRowsRaw.sort(function(a,b){ return a.start-b.start; });
+    }
+
+    // Suchanfragen
+    var queries = [];
+    var qWs = findSheet(wb,'suchanfragen');
+    if (qWs){
+      var qRows = sheetRows(qWs).filter(function(r){ return r && r.length && r[0]!=null; });
+      qRows.shift();
+      qRows.forEach(function(r){
+        if (r[0]==null) return;
+        queries.push({query:String(r[0]), clicks:+r[1]||0, impr:+r[2]||0, pos:+r[4]||0});
+      });
+    }
+
+    // Geräte
+    var devices = [];
+    var dWs = findSheet(wb,'geraete');
+    if (dWs){
+      var dRows = sheetRows(dWs).filter(function(r){ return r && r.length && r[0]!=null; });
+      dRows.shift();
+      dRows.forEach(function(r){ devices.push({name:String(r[0]), clicks:+r[1]||0, impr:+r[2]||0, pos:+r[4]||0}); });
+    }
+
+    // Länder
+    var countries = [];
+    var cWs = findSheet(wb,'laender');
+    if (cWs){
+      var cRows = sheetRows(cWs).filter(function(r){ return r && r.length && r[0]!=null; });
+      cRows.shift();
+      cRows.forEach(function(r){ countries.push({name:String(r[0]), clicks:+r[1]||0, impr:+r[2]||0, pos:+r[4]||0}); });
+    }
+
+    // Seiten (+ Website guess)
+    var pages = [];
+    var website = null;
+    var pWs = findSheet(wb,'seiten');
+    if (pWs){
+      var pRows = sheetRows(pWs).filter(function(r){ return r && r.length && r[0]!=null; });
+      pRows.shift();
+      pRows.forEach(function(r){ pages.push({url:String(r[0]), clicks:+r[1]||0, impr:+r[2]||0, pos:+r[4]||0}); });
+      if (pages.length){
+        try{ website = new URL(pages[0].url).hostname.replace(/^www\./,''); }catch(e){}
+      }
+    }
+
+    return {mode:mode, dailyRows:dailyRows, monthlyRowsRaw:monthlyRowsRaw, queries:queries, devices:devices, countries:countries, pages:pages, website:website};
+  }
+
+  /* ============================================================
+     2. AGGREGATE
+  ============================================================ */
+  function monthKey(y,m0){ return y+'-'+pad2(m0+1); }
+
+  function buildFromDaily(dailyRows){
+    var monthMap = {};
+    dailyRows.forEach(function(d){
+      var key = monthKey(d.date.getUTCFullYear(), d.date.getUTCMonth());
+      if (!monthMap[key]) monthMap[key] = {key:key, y:d.date.getUTCFullYear(), m0:d.date.getUTCMonth(), clicks:0, impr:0, posSum:0, days:0};
+      var b = monthMap[key];
+      b.clicks += d.clicks; b.impr += d.impr; b.posSum += d.pos*d.impr; b.days += 1;
+    });
+    var monthlyBuckets = Object.keys(monthMap).sort().map(function(k){
+      var b = monthMap[k];
+      return {
+        key:k, label: MONTHS_SHORT[b.m0]+" "+String(b.y).slice(2),
+        clicks:b.clicks, impr:b.impr, pos: b.impr? b.posSum/b.impr : 0,
+        days:b.days, isFull: b.days === daysInMonth(b.y, b.m0+1)
+      };
+    });
+
+    var weekMap = {};
+    dailyRows.forEach(function(d){
+      var iw = isoWeekInfo(d.date);
+      var key = iw.year+'-W'+pad2(iw.week);
+      if (!weekMap[key]) weekMap[key] = {key:key, monday:iw.monday, clicks:0, impr:0, posSum:0, days:0};
+      var b = weekMap[key];
+      b.clicks += d.clicks; b.impr += d.impr; b.posSum += d.pos*d.impr; b.days += 1;
+    });
+    var trendSeries = Object.keys(weekMap).sort().map(function(k){
+      var b = weekMap[k];
+      return {label: fmtDateShort(b.monday), clicks:b.clicks, impr:b.impr, pos: b.impr? b.posSum/b.impr : 0, partial: b.days < 7};
+    });
+
+    return {monthlyBuckets:monthlyBuckets, trendSeries:trendSeries};
+  }
+
+  function buildFromMonthly(rows){
+    var lens = rows.map(function(r){ return Math.round((r.end-r.start)/86400000)+1; });
+    var sorted = lens.slice().sort(function(a,b){return a-b;});
+    var modal = sorted[Math.floor(sorted.length/2)] || 30;
+
+    var monthlyBuckets = rows.map(function(r,i){
+      var days = lens[i];
+      return {
+        key: r.start.getUTCFullYear()+'-'+pad2(r.start.getUTCMonth()+1),
+        label: MONTHS_SHORT[r.start.getUTCMonth()]+" "+String(r.start.getUTCFullYear()).slice(2),
+        clicks:r.clicks, impr:r.impr, pos:r.pos, days:days,
+        isFull: days === daysInMonth(r.start.getUTCFullYear(), r.start.getUTCMonth()+1)
+      };
+    });
+    var trendSeries = rows.map(function(r,i){
+      return {label: fmtDateShort(r.start), clicks:r.clicks, impr:r.impr, pos:r.pos, partial: lens[i] < modal*0.9};
+    });
+    return {monthlyBuckets:monthlyBuckets, trendSeries:trendSeries};
+  }
+
+  function computeStrongPotential(queries){
+    var withData = queries.filter(function(q){ return q.impr>0; });
+    var strong = withData.filter(function(q){ return q.pos<=10 && q.clicks>0; })
+      .sort(function(a,b){ return b.clicks-a.clicks; }).slice(0,6);
+    var strongSet = {}; strong.forEach(function(q){ strongSet[q.query]=true; });
+    var thresholds = [50,20,5,0];
+    var potential = [];
+    for (var i=0;i<thresholds.length;i++){
+      potential = withData.filter(function(q){ return q.pos>10 && q.impr>=thresholds[i] && !strongSet[q.query]; })
+        .sort(function(a,b){ return b.impr-a.impr; }).slice(0,6);
+      if (potential.length>=3) break;
+    }
+    return {strong:strong, potential:potential};
+  }
+
+  function guessBrandTerm(website){
+    if (!website) return '';
+    var host = website.replace(/^www\./,'').split('.')[0];
+    var tokens = host.split(/[^a-z0-9äöüß]+/i).filter(Boolean);
+    if (!tokens.length) return host;
+    tokens.sort(function(a,b){ return b.length-a.length; });
+    return tokens[0].toLowerCase();
+  }
+
+  function computeBrandSplit(queries, brandTerm){
+    var term = (brandTerm||'').toLowerCase().trim();
+    var brand = {clicks:0, impr:0}, nonBrand = {clicks:0, impr:0};
+    queries.forEach(function(q){
+      var isBrand = term && q.query.toLowerCase().indexOf(term) !== -1;
+      var t = isBrand ? brand : nonBrand;
+      t.clicks += q.clicks; t.impr += q.impr;
+    });
+    return {brand:brand, nonBrand:nonBrand};
+  }
+
+  function computePositionBands(queries){
+    var bands = [
+      {key:'1-3', label:'Position 1–3', min:1, max:3, impr:0, clicks:0, color:'var(--good)'},
+      {key:'4-10', label:'Position 4–10', min:4, max:10, impr:0, clicks:0, color:'var(--blue)'},
+      {key:'11-20', label:'Position 11–20', min:11, max:20, impr:0, clicks:0, color:'var(--warn-dot)'},
+      {key:'21+', label:'Position 21+', min:21, max:Infinity, impr:0, clicks:0, color:'var(--critical)'}
+    ];
+    queries.forEach(function(q){
+      if (q.impr<=0) return;
+      for (var i=0;i<bands.length;i++){
+        if (q.pos>=bands[i].min && q.pos<=bands[i].max){ bands[i].impr+=q.impr; bands[i].clicks+=q.clicks; break; }
+      }
+    });
+    var totalImpr = bands.reduce(function(s,b){return s+b.impr;},0);
+    bands.forEach(function(b){ b.pct = totalImpr ? b.impr/totalImpr : 0; });
+    return bands;
+  }
+
+  var CTR_BENCHMARK = [0.28,0.15,0.11,0.08,0.07,0.05,0.04,0.03,0.03,0.02];
+  function expectedCTR(pos){
+    var idx = Math.round(pos);
+    if (idx>=1 && idx<=10) return CTR_BENCHMARK[idx-1];
+    if (pos>10 && pos<=20) return 0.015;
+    return 0.007;
+  }
+  function computeCtrOpportunities(queries){
+    return queries.filter(function(q){
+      if (q.impr<20) return false;
+      var actual = q.impr? q.clicks/q.impr : 0;
+      return actual < expectedCTR(q.pos)*0.5;
+    }).sort(function(a,b){return b.impr-a.impr;}).slice(0,6);
+  }
+
+  function shortPath(url){
+    try{ var u = new URL(url); return u.pathname==='/'||!u.pathname ? '/' : u.pathname; }catch(e){ return url; }
+  }
+
+  /* ---- briefing-keyword matching: exact -> substring -> token-overlap ---- */
+  function parseKeywordLines(text){
+    return (text||'').split(/\n|,/).map(function(s){return s.trim();}).filter(Boolean);
+  }
+  function tokenSet(str){
+    var words = String(str||'').toLowerCase()
+      .replace(/[„“”"'()]/g,' ')
+      .replace(/[^a-z0-9äöüß\s-]/g,' ')
+      .split(/[\s-]+/).map(function(t){return t.trim();}).filter(function(t){return t.length>2;});
+    var s = {}; words.forEach(function(w){ s[w]=true; });
+    return s;
+  }
+  function matchBriefingKeyword(kw, queries){
+    var k = (kw||'').toLowerCase().trim();
+    if (!k) return null;
+    var exact = queries.find(function(q){ return q.query.toLowerCase().trim()===k; });
+    if (exact) return {clicks:exact.clicks, impr:exact.impr, pos:exact.pos, matchType:'exact'};
+    var candidates = queries.filter(function(q){
+      var ql = q.query.toLowerCase();
+      return ql.indexOf(k)!==-1 || (k.length>3 && k.indexOf(ql)!==-1);
+    });
+    if (candidates.length){
+      candidates.sort(function(a,b){ return b.impr-a.impr; });
+      var c = candidates[0];
+      return {clicks:c.clicks, impr:c.impr, pos:c.pos, matchType:'partial'};
+    }
+    var kTokens = tokenSet(k);
+    var kKeys = Object.keys(kTokens);
+    if (!kKeys.length) return null;
+    var best=null, bestScore=0;
+    queries.forEach(function(q){
+      var qTokens = tokenSet(q.query);
+      var overlap=0; kKeys.forEach(function(t){ if (qTokens[t]) overlap++; });
+      var score = overlap/kKeys.length;
+      if (score>bestScore){ bestScore=score; best=q; }
+    });
+    if (best && bestScore>=0.7) return {clicks:best.clicks, impr:best.impr, pos:best.pos, matchType:'token'};
+    return null;
+  }
+
+  /* ---- qualitative Einordnung je Keyword (wie eine erfahrene SEO-Bewertung) ---- */
+  function keywordEinordnung(m, roundDate){
+    var daysSince = roundDate ? Math.round((new Date()-roundDate)/86400000) : 9999;
+    if (!m) return {tag:'low', text:'Kein Ranking im aktuellen Export erkennbar.'};
+    if (m.impr<10) return {tag:'low', text:'Praktisch keine Nachfrage messbar ('+deNum(m.impr)+' Impressionen).'};
+    if (m.clicks===0 && m.pos<=10){
+      return daysSince<90
+        ? {tag:'mid', text:'Nachfrage vorhanden, Klicks fehlen noch – zu früh für ein Urteil (< 3 Monate seit Eintragung).'}
+        : {tag:'low', text:'Nachfrage vorhanden ('+deNum(m.impr)+' Impr.), aber auch nach über 3 Monaten keine Klicks – Title/Snippet prüfen.'};
+    }
+    if (m.clicks===0 && m.pos>10) return {tag:'low', text:'Nachfrage vorhanden, Position '+dePos(m.pos)+' aber noch zu schwach für Klicks.'};
+    if (m.pos<=5) return {tag:'good', text:'Läuft bereits gut (Position '+dePos(m.pos)+').'};
+    return {tag:'mid', text:'Läuft an, Position '+dePos(m.pos)+' – weiter beobachten.'};
+  }
+  function chipClassForTag(tag){ return tag==='good' ? 'good' : (tag==='mid' ? 'warn' : 'bad'); }
+
+  /* ---- Keyword-Runden: datierte Gruppen abgesprochener Keywords ---- */
+  function trendCellHTML(m, pm){
+    if (!pm && !m) return '<span class="trend flat">–</span>';
+    if (!pm && m) return '<span class="trend up" title="Im Vergleichszeitraum noch kein Ranking">neu</span>';
+    if (pm && !m) return '<span class="trend down" title="Im aktuellen Zeitraum kein Ranking mehr">verloren</span>';
+    var delta = pm.pos - m.pos; // positiv = Position verbessert (Zahl kleiner)
+    if (delta > 0.5) return '<span class="trend up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M6 15l6-6 6 6"/></svg>'+dePos(Math.abs(delta))+'</span>';
+    if (delta < -0.5) return '<span class="trend down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M6 9l6 6 6-6"/></svg>'+dePos(Math.abs(delta))+'</span>';
+    return '<span class="trend flat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h14"/></svg>'+dePos(Math.abs(delta))+'</span>';
+  }
+  function renderRoundsList(queries, rounds, compareQueries){
+    var box = document.getElementById('rounds-list');
+    if (!rounds || !rounds.length){ box.innerHTML = '<p class="empty-hint">Noch keine Keyword-Runde hinterlegt.</p>'; return; }
+    var showTrend = !!(compareQueries && compareQueries.length);
+    box.innerHTML = rounds.slice().sort(function(a,b){ return (a.date||'')<(b.date||'') ? -1 : 1; }).map(function(round){
+      var roundDate = round.date ? new Date(round.date+'T00:00:00') : null;
+      var rows = (round.keywords||[]).map(function(kw){
+        var m = matchBriefingKeyword(kw, queries);
+        var e = keywordEinordnung(m, roundDate);
+        var pm = showTrend ? matchBriefingKeyword(kw, compareQueries) : null;
+        return '<tr><td class="q">'+kw+'</td><td class="num">'+(m?deNum(m.clicks):'–')+'</td><td class="num">'+(m?deNum(m.impr):'–')+'</td><td class="num">'+(m?dePos(m.pos):'–')+
+          (showTrend ? '</td><td class="num">'+trendCellHTML(m,pm) : '')+
+          '</td><td><span class="chip '+chipClassForTag(e.tag)+'"><span class="dot"></span>'+e.text+'</span></td></tr>';
+      }).join('');
+      return '<div style="margin-bottom:20px;">'+
+        '<div style="display:flex; justify-content:space-between; align-items:baseline; gap:10px; margin-bottom:8px;">'+
+          '<h4 style="margin:0; font-size:13px; font-weight:500;">'+(round.label||'Runde')+' <span style="color:var(--ink-3); font-weight:400;">· '+(roundDate?fmtDateDE(roundDate):'ohne Datum')+'</span></h4>'+
+          '<button type="button" class="btn small" data-round-del="'+round.id+'" style="padding:3px 9px; font-size:11px;">Löschen</button>'+
+        '</div>'+
+        '<table><thead><tr><th>Keyword</th><th class="num">Klicks</th><th class="num">Impr.</th><th class="num">Ø Pos.</th>'+(showTrend?'<th class="num">Trend</th>':'')+'<th>Einordnung</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+      '</div>';
+    }).join('');
+    Array.prototype.forEach.call(box.querySelectorAll('[data-round-del]'), function(btn){
+      btn.addEventListener('click', function(){
+        if (activeIndex<0) return;
+        var id = btn.getAttribute('data-round-del');
+        reports[activeIndex].meta.briefingRounds = (reports[activeIndex].meta.briefingRounds||[]).filter(function(r){ return r.id!==id; });
+        renderActive();
+      });
+    });
+  }
+
+  /* ---- regional keyword suggestions (Local-SEO combinatorics) ---- */
+  var REGIONAL_PATTERNS = [
+    function(l,r){ return l+" "+r; },
+    function(l,r){ return l+" in "+r; },
+    function(l,r){ return l+" "+r+" in der Nähe"; },
+    function(l,r){ return "bester "+l+" "+r; }
+  ];
+  function generateRegionalSuggestions(region, services, queries){
+    region = (region||'').trim();
+    var out = [];
+    if (!region || !services.length) return out;
+    var seen = {};
+    services.forEach(function(svc){
+      svc = svc.trim(); if (!svc) return;
+      REGIONAL_PATTERNS.forEach(function(p){
+        var kw = p(svc, region).replace(/\s+/g,' ').trim();
+        var key = kw.toLowerCase();
+        if (seen[key]) return; seen[key]=true;
+        out.push({keyword:kw, match:matchBriefingKeyword(kw, queries)});
+      });
+    });
+    return out;
+  }
+  function renderRegionalSuggestions(queries){
+    var region = document.getElementById('f-region').value;
+    var services = (document.getElementById('f-services').value||'').split(',');
+    var box = document.getElementById('regional-suggestions');
+    var nearbyBox = document.getElementById('nearby-insight');
+    var nearby = queries.filter(function(q){ return /in der nähe|naehe/i.test(q.query); });
+    if (nearby.length){
+      var nearbyImpr = nearby.reduce(function(s,q){return s+q.impr;},0);
+      nearbyBox.style.display = '';
+      nearbyBox.innerHTML = '📍 '+nearby.length+' Suchanfrage(n) mit „in der Nähe" bereits im Export ('+deNum(nearbyImpr)+' Impressionen) – dafür zählt meist das Google-Unternehmensprofil (Öffnungszeiten, Fotos, Bewertungen) mehr als die Website selbst.';
+    } else {
+      nearbyBox.style.display = 'none';
+    }
+    var sugg = generateRegionalSuggestions(region, services, queries);
+    if (!sugg.length){ box.innerHTML = '<p class="empty-hint">Region und mindestens eine Leistung eintragen, um Vorschläge zu erzeugen.</p>'; return; }
+    box.innerHTML = sugg.map(function(s){
+      return s.match
+        ? '<span class="kw-chip have">'+s.keyword+' <small>· '+deNum(s.match.clicks)+' Klicks, Pos. '+dePos(s.match.pos)+'</small></span>'
+        : '<span class="kw-chip new">'+s.keyword+' <small>· neue Content-Idee</small></span>';
+    }).join('');
+  }
+
+  /* ============================================================
+     3. RENDER
+  ============================================================ */
+  var W = 640, H = 168, PAD = {top:14,right:8,bottom:22,left:8};
+
+  function buildChartHTML(cfg, series){
+    var vals = series.map(function(d){ return d[cfg.key]; });
+    var min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
+    if (min === max){ min -= 1; max += 1; }
+    var span = max - min;
+    min -= span*0.12; max += span*0.12;
+
+    function x(i){ return series.length>1 ? PAD.left + (i/(series.length-1)) * (W-PAD.left-PAD.right) : W/2; }
+    function y(v){
+      var t = (v-min)/(max-min);
+      if (cfg.invert) t = 1-t;
+      return PAD.top + (1-t) * (H-PAD.top-PAD.bottom);
+    }
+    var pts = series.map(function(d,i){ return [x(i), y(d[cfg.key])]; });
+    var lineFull = "M" + pts.map(function(p){return p[0].toFixed(1)+","+p[1].toFixed(1);}).join(" L");
+    var areaFull = lineFull + " L" + pts[pts.length-1][0].toFixed(1) + "," + (H-PAD.bottom) + " L" + pts[0][0].toFixed(1) + "," + (H-PAD.bottom) + " Z";
+    var gridTop = PAD.top, gridBot = H-PAD.bottom;
+
+    var dots = pts.map(function(p,i){ return '<circle class="hover-dot" data-i="'+i+'" cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="4" stroke="'+cfg.color+'"></circle>'; }).join('');
+    var lastPt = pts[pts.length-1];
+    var lastVal = cfg.fmt(series[series.length-1][cfg.key]);
+
+    var segMain, segStart='', segEnd='';
+    if (pts.length>1){
+      segMain = "M" + pts.slice(1,pts.length-1).length ? "M"+pts.slice(1,pts.length-1).map(function(p){return p[0].toFixed(1)+","+p[1].toFixed(1);}).join(" L") : lineFull;
+      if (pts.length>2){
+        segStart = "M"+pts[0][0].toFixed(1)+","+pts[0][1].toFixed(1)+" L"+pts[1][0].toFixed(1)+","+pts[1][1].toFixed(1);
+        segEnd = "M"+pts[pts.length-2][0].toFixed(1)+","+pts[pts.length-2][1].toFixed(1)+" L"+pts[pts.length-1][0].toFixed(1)+","+pts[pts.length-1][1].toFixed(1);
+        segMain = "M"+pts.slice(1,pts.length-1).map(function(p){return p[0].toFixed(1)+","+p[1].toFixed(1);}).join(" L");
+      } else {
+        segMain = lineFull; segStart=''; segEnd='';
+      }
+    } else {
+      segMain = '';
+    }
+
+    var svgId = "svg-"+cfg.key+"-"+Math.random().toString(36).slice(2,7);
+    var html = ''+
+    '<div class="chart-card">'+
+      '<div class="chart-title"><span class="sw" style="background:'+cfg.color+'"></span>'+cfg.title+'</div>'+
+      '<div class="chart-current">'+lastVal+'<span>letzter Zeitpunkt'+(series[series.length-1].partial?' (unvollständig)':'')+'</span></div>'+
+      '<div class="chart-svg-wrap">'+
+        '<svg class="chart" id="'+svgId+'" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none">'+
+          '<line class="gridline" x1="'+PAD.left+'" y1="'+gridTop+'" x2="'+(W-PAD.right)+'" y2="'+gridTop+'"></line>'+
+          '<line class="gridline" x1="'+PAD.left+'" y1="'+gridBot+'" x2="'+(W-PAD.right)+'" y2="'+gridBot+'"></line>'+
+          '<text class="axis-label" x="'+PAD.left+'" y="'+(gridTop-4)+'">'+cfg.fmt(max - span*0.12)+'</text>'+
+          '<defs><linearGradient id="grad-'+svgId+'" x1="0" y1="0" x2="0" y2="1">'+
+            '<stop offset="0%" stop-color="'+cfg.color+'" stop-opacity="0.35"></stop>'+
+            '<stop offset="100%" stop-color="'+cfg.color+'" stop-opacity="0"></stop>'+
+          '</linearGradient></defs>'+
+          (pts.length>1 ? '<path class="area-fill" d="'+areaFull+'" fill="url(#grad-'+svgId+')"></path>' : '')+
+          (segStart ? '<path class="line-path partial" d="'+segStart+'" stroke="'+cfg.color+'"></path>' : '')+
+          (segMain ? '<path class="line-path" d="'+segMain+'" stroke="'+cfg.color+'"></path>' : '')+
+          (segEnd ? '<path class="line-path partial" d="'+segEnd+'" stroke="'+cfg.color+'"></path>' : '')+
+          '<circle class="end-dot" cx="'+lastPt[0].toFixed(1)+'" cy="'+lastPt[1].toFixed(1)+'" r="4" fill="'+cfg.color+'"></circle>'+
+          dots+
+          '<line class="crosshair" id="cross-'+svgId+'" x1="0" y1="'+PAD.top+'" x2="0" y2="'+gridBot+'"></line>'+
+          '<text class="x-label" x="'+pts[0][0]+'" y="'+(H-6)+'" text-anchor="start">'+series[0].label+'</text>'+
+          (pts.length>1 ? '<text class="x-label" x="'+pts[pts.length-1][0]+'" y="'+(H-6)+'" text-anchor="end">'+series[series.length-1].label+'</text>' : '')+
+        '</svg>'+
+        '<div class="tooltip" id="tip-'+svgId+'"></div>'+
+      '</div>'+
+    '</div>';
+
+    return {html:html, pts:pts, svgId:svgId};
+  }
+
+  function wireChart(built, cfg, series){
+    var svg = document.getElementById(built.svgId);
+    if (!svg) return;
+    var tip = document.getElementById("tip-"+built.svgId);
+    var cross = document.getElementById("cross-"+built.svgId);
+    var dots = svg.querySelectorAll('.hover-dot');
+    function nearestIndex(clientX){
+      var rect = svg.getBoundingClientRect();
+      var relX = (clientX - rect.left) / rect.width * W;
+      var best=0, bestDist=Infinity;
+      built.pts.forEach(function(p,i){ var d=Math.abs(p[0]-relX); if (d<bestDist){bestDist=d; best=i;} });
+      return best;
+    }
+    function show(clientX){
+      var i = nearestIndex(clientX);
+      var p = built.pts[i], d = series[i];
+      dots.forEach(function(dot,j){ dot.style.opacity = (j===i)?1:0; });
+      cross.setAttribute("x1", p[0]); cross.setAttribute("x2", p[0]); cross.style.opacity = 1;
+      var rect = svg.getBoundingClientRect();
+      tip.style.left = ((p[0]/W)*rect.width) + "px";
+      tip.style.top = ((p[1]/H)*rect.height) + "px";
+      tip.innerHTML = d.label + (d.partial?" (unvollst.)":"") + " &middot; " + cfg.fmt(d[cfg.key]);
+      tip.style.opacity = 1;
+    }
+    function hide(){ dots.forEach(function(dot){dot.style.opacity=0;}); cross.style.opacity=0; tip.style.opacity=0; }
+    svg.addEventListener("pointermove", function(e){ show(e.clientX); });
+    svg.addEventListener("pointerleave", hide);
+    svg.addEventListener("touchstart", function(e){ if(e.touches[0]) show(e.touches[0].clientX); }, {passive:true});
+  }
+
+  function setDelta(id, value, dir, note){
+    var el = document.getElementById(id);
+    el.classList.remove('up','down','flat'); el.classList.add(dir);
+    var arrow = dir==='up'
+      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M6 15l6-6 6 6"/></svg>'
+      : dir==='down'
+      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M6 9l6 6 6-6"/></svg>'
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h14"/></svg>';
+    el.innerHTML = arrow + value;
+  }
+
+  function render(data, meta){
+    var monthlyBuckets = data.monthlyBuckets, trendSeries = data.trendSeries;
+    var queries = data.queries, devices = data.devices, countries = data.countries;
+    var pages = data.pages || [];
+
+    var totalClicks = monthlyBuckets.reduce(function(s,b){return s+b.clicks;},0);
+    var totalImpr = monthlyBuckets.reduce(function(s,b){return s+b.impr;},0);
+    var weightedPos = totalImpr ? monthlyBuckets.reduce(function(s,b){return s+b.pos*b.impr;},0)/totalImpr : 0;
+    var overallCtr = totalImpr ? totalClicks/totalImpr : 0;
+
+    var first = monthlyBuckets[0], last = monthlyBuckets[monthlyBuckets.length-1];
+    var fullMonths = monthlyBuckets.filter(function(b){return b.isFull;});
+
+    /* ---- meta / hero ---- */
+    document.getElementById('f-website').textContent = meta.website;
+    document.getElementById('f-client').textContent = meta.client || '';
+    document.getElementById('f-author').textContent = meta.author;
+    document.getElementById('welcome-name').textContent = meta.author ? (', '+meta.author) : '';
+    document.getElementById('f-footer').textContent = meta.footer;
+    document.getElementById('f-brand').textContent = meta.brandTerm || guessBrandTerm(meta.website);
+    document.getElementById('f-source').textContent = 'Quelle: Google Search Console Performance-Export' + (meta.exportDate ? (', '+meta.exportDate) : '');
+    var todayStr = fmtDateDE(new Date());
+    document.getElementById('f-date').textContent = todayStr;
+    var periodStart = meta.periodStart, periodEnd = meta.periodEnd;
+    document.getElementById('f-period').textContent = periodStart && periodEnd ? (fmtDateDE(periodStart)+" – "+fmtDateDE(periodEnd)) : "–";
+    var dayCount = (periodStart && periodEnd) ? Math.round((periodEnd-periodStart)/86400000)+1 : monthlyBuckets.reduce(function(s,b){return s+b.days;},0);
+    document.getElementById('kpi-period-note').textContent = "Gesamtzeitraum · "+dayCount+" Tage · Ø CTR "+dePct(overallCtr).split(',')[0]+"%";
+
+    /* ---- narrative ---- */
+    var posDeltaAbs = first.pos - last.pos; // positive = improved
+    var posDeltaDir = posDeltaAbs > 0.05 ? 'besser geworden' : (posDeltaAbs < -0.05 ? 'leicht zurückgegangen' : 'stabil geblieben');
+    var clicksCompareLabel, clicksCompareVal;
+    if (fullMonths.length>=2){
+      var fm1=fullMonths[0], fm2=fullMonths[fullMonths.length-1];
+      clicksCompareLabel = fm1.label+" → "+fm2.label;
+      clicksCompareVal = fm1.clicks ? ((fm2.clicks-fm1.clicks)/fm1.clicks) : 0;
+    } else {
+      clicksCompareLabel = first.label+" → "+last.label;
+      var firstPerDay = first.days? first.clicks/first.days:0, lastPerDay = last.days? last.clicks/last.days:0;
+      clicksCompareVal = firstPerDay ? ((lastPerDay-firstPerDay)/firstPerDay) : 0;
+    }
+    var imprFirstDay = first.days? first.impr/first.days:0, imprLastDay = last.days? last.impr/last.days:0;
+    var imprDelta = imprFirstDay ? (imprLastDay-imprFirstDay)/imprFirstDay : 0;
+    var compareMode = !!data.compareTotals;
+    var compareTag = document.getElementById('compare-tag-slot');
+    if (compareMode){
+      var cmp = data.compareTotals;
+      var cmpDays = Math.max(1, cmp.days||1);
+      var curImprPerDay = dayCount ? totalImpr/dayCount : 0, cmpImprPerDay = cmp.impr/cmpDays;
+      clicksCompareLabel = "Vorperiode ("+fmtDateDE(cmp.periodStart)+"–"+fmtDateDE(cmp.periodEnd)+") → aktueller Zeitraum";
+      clicksCompareVal = cmp.clicks ? ((totalClicks-cmp.clicks)/cmp.clicks) : 0;
+      imprDelta = cmpImprPerDay ? ((curImprPerDay-cmpImprPerDay)/cmpImprPerDay) : 0;
+      posDeltaAbs = cmp.pos - weightedPos;
+      posDeltaDir = posDeltaAbs > 0.05 ? 'besser geworden' : (posDeltaAbs < -0.05 ? 'leicht zurückgegangen' : 'stabil geblieben');
+    }
+
+    var sp = computeStrongPotential(queries);
+    var topDevice = devices.slice().sort(function(a,b){return b.clicks-a.clicks;})[0];
+    var deviceClickSum = devices.reduce(function(s,d){return s+d.clicks;},0) || totalClicks;
+    var topCountry = countries.slice().sort(function(a,b){return b.clicks-a.clicks;})[0];
+    var countryClickSum = countries.reduce(function(s,c){return s+c.clicks;},0) || totalClicks;
+
+    var clientLabel = (meta.client && meta.client.trim()) ? meta.client.trim() : meta.website;
+    var p1 = "Im Beobachtungszeitraum ("+fmtDateDE(periodStart)+"–"+fmtDateDE(periodEnd)+") zeigt die Website von "+clientLabel+" folgenden Trend: Die durchschnittliche Position in der Google-Suche ist von "+dePos(first.pos)+" ("+first.label+") auf "+dePos(last.pos)+" ("+last.label+") "+posDeltaDir+", bei insgesamt "+deNum(totalClicks)+" Klicks und "+deNum(totalImpr)+" Impressionen.";
+
+    var p2 = "Zwischen "+clicksCompareLabel+" "+(fullMonths.length>=2?"(volle Monate) ":"")+"haben sich die Klicks um "+(clicksCompareVal>=0?"rund "+dePct(Math.abs(clicksCompareVal)).split(',')[0]:"rund -"+dePct(Math.abs(clicksCompareVal)).split(',')[0])+"&thinsp;% verändert."+
+      (sp.strong.length ? " Besonders stark performt „"+sp.strong[0].query+"“ (Ø Position "+dePos(sp.strong[0].pos)+(sp.strong.length>1?", gefolgt von „"+sp.strong[1].query+"“":"")+")." : "");
+
+    var p3parts = [];
+    if (topDevice) p3parts.push("Der wichtigste Kanal ist "+topDevice.name+" ("+deNum(topDevice.clicks)+" von "+deNum(deviceClickSum)+" Klicks)");
+    if (topCountry) p3parts.push("die meisten Klicks kommen aus "+topCountry.name+" ("+deNum(topCountry.clicks)+" von "+deNum(countryClickSum)+")");
+    var p3 = p3parts.length ? (p3parts.join(", ")+".") : "";
+    if (sp.potential.length){
+      p3 += " Gleichzeitig zeigen "+sp.potential.length+" weitere Suchanfragen bereits deutliche Sichtbarkeit bei Google, aber noch keine oder kaum Klicks – das größte kurzfristige Potenzial für die kommenden Wochen.";
+    }
+
+    var brandTerm = meta.brandTerm || guessBrandTerm(meta.website);
+    var brandSplit = computeBrandSplit(queries, brandTerm);
+    var brandClickSum = brandSplit.brand.clicks + brandSplit.nonBrand.clicks;
+    var p4 = "";
+    if (brandTerm && brandClickSum){
+      var brandShare = brandSplit.brand.clicks/brandClickSum;
+      p4 = "Rund "+dePct(brandShare).split(',')[0]+"&thinsp;% der Klicks entfallen auf Markenbegriffe rund um „"+brandTerm+"“, die restlichen "+dePct(1-brandShare).split(',')[0]+"&thinsp;% kommen bereits über generische, nicht-Marken-Suchanfragen – das ist der Teil der Sichtbarkeit, der aktiv erarbeitet wurde.";
+    }
+
+    document.getElementById('narrative').innerHTML = '<p>'+p1+'</p><p>'+p2+'</p>'+(p3?'<p>'+p3+'</p>':'')+(p4?'<p>'+p4+'</p>':'');
+
+    /* ---- KPI tiles (Dashboard-Kachelraster: Status-Kacheln + Vergleichs-Kacheln) ---- */
+    var ICON_SEARCH = '<svg class="kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>';
+    var ICON_TARGET = '<svg class="kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>';
+    var ICON_PAGE   = '<svg class="kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>';
+    var ICON_CLICK  = '<svg class="kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51z"/></svg>';
+    var ICON_EYE    = '<svg class="kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+    var ICON_TREND  = '<svg class="kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 8-8"/><path d="M17 7h4v4"/></svg>';
+
+    var qWithImpr = queries.filter(function(q){ return q.impr>0; });
+    var topQuery = qWithImpr.slice().sort(function(a,b){ return b.clicks-a.clicks; })[0];
+    var bestPosQuery = qWithImpr.slice().sort(function(a,b){ return a.pos-b.pos; })[0];
+    var onPage1Count = qWithImpr.filter(function(q){ return q.pos<=10; }).length;
+
+    var clicksNote = compareMode ? 'vs. Vorperiode' : clicksCompareLabel;
+    var posNote = compareMode ? 'vs. Vorperiode (niedriger = besser)' : (first.label+' → '+last.label+' (niedriger = besser)');
+    document.getElementById('kpi-grid').innerHTML =
+      '<div class="kpi">'+ICON_SEARCH+'<div class="kpi-label">Top-Suchanfrage</div><div class="kpi-value" style="font-size:19px; line-height:1.3;">'+(topQuery?topQuery.query:'–')+'</div><div class="kpi-note">'+(topQuery?deNum(topQuery.clicks)+' Klicks, Pos. '+dePos(topQuery.pos):'Keine Daten')+'</div></div>'+
+      '<div class="kpi">'+ICON_TARGET+'<div class="kpi-label">Beste Position</div><div class="kpi-value">'+(bestPosQuery?dePos(bestPosQuery.pos):'–')+'</div><div class="kpi-note">'+(bestPosQuery?'„'+bestPosQuery.query+'"':'Keine Daten')+'</div></div>'+
+      '<div class="kpi">'+ICON_PAGE+'<div class="kpi-label">Keywords auf Seite 1</div><div class="kpi-value">'+onPage1Count+'</div><div class="kpi-note">von '+qWithImpr.length+' erfassten Suchanfragen</div></div>'+
+      '<div class="kpi"><div class="bar" style="background:var(--blue)"></div>'+ICON_CLICK+'<div class="kpi-label">Klicks gesamt</div><div class="kpi-value">'+deNum(totalClicks)+'</div><div class="kpi-delta" id="d-clicks"></div><div class="kpi-note">'+clicksNote+'</div></div>'+
+      '<div class="kpi"><div class="bar" style="background:var(--orange)"></div>'+ICON_EYE+'<div class="kpi-label">Impressionen gesamt</div><div class="kpi-value">'+deNum(totalImpr)+'</div><div class="kpi-delta" id="d-impr"></div><div class="kpi-note">Ø Tageswert, '+(compareMode?'vs. Vorperiode':(first.label+' → '+last.label))+'</div></div>'+
+      '<div class="kpi"><div class="bar" style="background:var(--good)"></div>'+ICON_TREND+'<div class="kpi-label">Ø Position</div><div class="kpi-value">'+dePos(weightedPos)+'</div><div class="kpi-delta" id="d-pos"></div><div class="kpi-note">'+posNote+'</div></div>';
+
+    /* ---- Empfehlungen-Panel (Boostability-Style „Required Actions", hier positiv formuliert) ---- */
+    var nextSteps = [];
+    if (sp.potential.length){
+      nextSteps.push('<b>„'+sp.potential[0].query+'"</b> hat bereits '+deNum(sp.potential[0].impr)+' Impressionen bei Position '+dePos(sp.potential[0].pos)+' – Content/Title optimieren, um auf Seite 1 zu kommen.');
+    }
+    var ctrOppPreview = computeCtrOpportunities(queries);
+    if (ctrOppPreview.length){
+      nextSteps.push('CTR-Chance bei <b>„'+ctrOppPreview[0].query+'"</b>: Klickrate liegt deutlich unter dem für Position '+dePos(ctrOppPreview[0].pos)+' üblichen Wert – Title/Meta-Description prüfen.');
+    }
+    var lowRoundKw = null;
+    (meta.briefingRounds||[]).forEach(function(round){
+      if (lowRoundKw) return;
+      var rd = round.date ? new Date(round.date+'T00:00:00') : null;
+      (round.keywords||[]).forEach(function(kw){
+        if (lowRoundKw) return;
+        var m = matchBriefingKeyword(kw, queries);
+        var e = keywordEinordnung(m, rd);
+        if (e.tag==='low') lowRoundKw = kw;
+      });
+    });
+    if (lowRoundKw) nextSteps.push('Briefing-Keyword <b>„'+lowRoundKw+'"</b> läuft noch schwach – im nächsten Abstimmungstermin ansprechen.');
+    if (overallCtr && overallCtr < 0.02) nextSteps.push('Die durchschnittliche CTR ist niedrig – Snippets/Title für die wichtigsten Seiten überarbeiten.');
+    if (!nextSteps.length) nextSteps.push('Aktuell keine auffälligen Handlungsfelder – laufende Maßnahmen fortsetzen und regelmäßig prüfen.');
+    document.getElementById('next-steps-list').innerHTML = nextSteps.slice(0,4).map(function(s){ return '<li>'+s+'</li>'; }).join('');
+
+    var clicksBase = compareMode ? data.compareTotals.clicks : (fullMonths.length>=2?fullMonths[0].clicks:first.clicks);
+    var clicksNow = compareMode ? totalClicks : (fullMonths.length>=2?fullMonths[fullMonths.length-1].clicks:last.clicks);
+    setDelta('d-clicks', (clicksCompareVal>=0?'+':'−')+dePct(Math.abs(clicksCompareVal)).split(',')[0]+'&thinsp;% ('+deNum(clicksBase)+' → '+deNum(clicksNow)+')', clicksCompareVal>=0.01?'up':(clicksCompareVal<=-0.01?'down':'flat'));
+    setDelta('d-impr', (imprDelta>=0?'+':'−')+dePct(Math.abs(imprDelta)).split(',')[0]+'&thinsp;% pro Tag', imprDelta>=0.01?'up':(imprDelta<=-0.01?'down':'flat'));
+    setDelta('d-pos', (posDeltaAbs>=0?'−':'+')+dePos(Math.abs(posDeltaAbs))+' Positionen', posDeltaAbs>=0.05?'up':(posDeltaAbs<=-0.05?'down':'flat'));
+
+    if (compareTag){
+      compareTag.innerHTML = compareMode
+        ? '<span class="compare-tag">Vergleich: '+fmtDateDE(data.compareTotals.periodStart)+'–'+fmtDateDE(data.compareTotals.periodEnd)+' <button type="button" id="btn-remove-compare" title="Vergleich entfernen">&times;</button></span>'
+        : '';
+      var rmBtn = document.getElementById('btn-remove-compare');
+      if (rmBtn) rmBtn.addEventListener('click', function(){ data.compareTotals=null; data.compareQueries=null; render(data, meta); });
+    }
+
+    /* ---- charts ---- */
+    document.getElementById('trend-title').textContent = data.mode==='daily' ? 'Entwicklung pro Woche' : 'Entwicklung pro Monat';
+    document.getElementById('trend-note').textContent = trendSeries.length + (data.mode==='daily' ? ' Wochen' : ' Zeiträume') + ' · erste/letzte Periode ggf. unvollständig im Export (gestrichelt)';
+    var grid = document.getElementById('chart-grid');
+    if (trendSeries.length >= 2){
+      var configs = [
+        {key:"clicks", title:"Klicks", color:"var(--blue)", fmt:deNum, invert:false},
+        {key:"impr",   title:"Impressionen", color:"var(--orange)", fmt:deNum, invert:false},
+        {key:"pos",    title:"Ø Position", color:"var(--good)", fmt:dePos, invert:true}
+      ];
+      var built = configs.map(function(c){ return buildChartHTML(c, trendSeries); });
+      grid.innerHTML = built.map(function(b){return b.html;}).join("");
+      built.forEach(function(b,i){ wireChart(b, configs[i], trendSeries); });
+    } else {
+      grid.innerHTML = '<div class="card"><p class="empty-hint">Zu wenige Datenpunkte für einen Verlauf – lade einen Export mit einem längeren Zeitraum.</p></div>';
+    }
+
+    /* ---- month table ---- */
+    document.getElementById('month-table-body').innerHTML = monthlyBuckets.map(function(b){
+      return '<tr><td>'+b.label+(b.isFull?'':'*')+'</td><td class="num">'+deNum(b.clicks)+'</td><td class="num">'+deNum(b.impr)+'</td><td class="num">'+dePos(b.pos)+'</td></tr>';
+    }).join('');
+    document.getElementById('month-footnote').style.display = monthlyBuckets.some(function(b){return !b.isFull;}) ? '' : 'none';
+
+    /* ---- device / country ---- */
+    var maxDeviceClicks = Math.max.apply(null, devices.map(function(d){return d.clicks;}).concat([1]));
+    var deviceColors = ['var(--blue)','var(--orange)','var(--ink-3)','var(--good)'];
+    document.getElementById('device-bars').innerHTML = devices.length ? devices.map(function(d,i){
+      var pct = Math.max(2, (d.clicks/maxDeviceClicks)*100);
+      return '<div class="bar-row"><span class="lbl">'+d.name+'</span><span class="bar-track"><span class="bar-fill" style="width:'+pct.toFixed(1)+'%; background:'+deviceColors[i%deviceColors.length]+';"></span></span><span class="val">'+deNum(d.clicks)+'</span></div>';
+    }).join('') : '<p class="empty-hint">Kein Geräte-Reiter im Export gefunden.</p>';
+
+    var kvHtml = '';
+    devices.slice().sort(function(a,b){return b.clicks-a.clicks;}).forEach(function(d){
+      kvHtml += '<div class="mini-kv"><span>Ø Position '+d.name+'</span><b>'+dePos(d.pos)+'</b></div>';
+    });
+    if (topCountry) kvHtml += '<div class="mini-kv"><span>Klicks aus '+topCountry.name+'</span><b>'+deNum(topCountry.clicks)+' / '+deNum(countryClickSum)+'</b></div>';
+    document.getElementById('device-kv').innerHTML = kvHtml || '<p class="empty-hint">Kein Länder-Reiter im Export gefunden.</p>';
+
+    /* ---- keyword tables ---- */
+    function qRow(q){ return '<tr><td class="q">'+q.query+'</td><td class="num">'+deNum(q.clicks)+'</td><td class="num">'+deNum(q.impr)+'</td><td class="num">'+dePos(q.pos)+'</td></tr>'; }
+    document.getElementById('strong-table-body').innerHTML = sp.strong.length ? sp.strong.map(qRow).join('') : '<tr><td colspan="4" class="empty-hint">Noch keine Suchanfragen auf Seite 1 mit Klicks.</td></tr>';
+    document.getElementById('potential-table-body').innerHTML = sp.potential.length ? sp.potential.map(qRow).join('') : '<tr><td colspan="4" class="empty-hint">Keine offensichtlichen Potenzial-Keywords gefunden.</td></tr>';
+
+    /* ---- position bands ---- */
+    var bands = computePositionBands(queries);
+    document.getElementById('position-bands').innerHTML = bands.map(function(b){
+      return '<div class="band-row"><span class="lbl">'+b.label+'</span><span class="bar-track"><span class="bar-fill" style="width:'+Math.max(2,b.pct*100).toFixed(1)+'%; background:'+b.color+';"></span></span><span class="val">'+dePct(b.pct).split(',')[0]+'&thinsp;%</span></div>';
+    }).join('');
+
+    /* ---- brand split ---- */
+    var maxBrand = Math.max(brandSplit.brand.clicks, brandSplit.nonBrand.clicks, 1);
+    function splitRow(label, obj, color){
+      var pct = brandClickSum ? obj.clicks/brandClickSum : 0;
+      return '<div class="split-row"><div class="split-head"><span>'+label+'</span><b>'+deNum(obj.clicks)+' Klicks · '+dePct(pct).split(',')[0]+'&thinsp;%</b></div>'+
+        '<span class="bar-track"><span class="bar-fill" style="width:'+Math.max(2,(obj.clicks/maxBrand)*100).toFixed(1)+'%; background:'+color+';"></span></span></div>';
+    }
+    document.getElementById('brand-split').innerHTML = brandTerm
+      ? splitRow('Marke ("'+brandTerm+'")', brandSplit.brand, 'var(--blue)') + splitRow('Nicht-Marke', brandSplit.nonBrand, 'var(--orange)')
+      : '<p class="empty-hint">Kein Markenbegriff eingetragen – im Report-Kopf ergänzen.</p>';
+
+    /* ---- top pages ---- */
+    var topPages = pages.slice().sort(function(a,b){return b.clicks-a.clicks;}).slice(0,6);
+    document.getElementById('pages-table-body').innerHTML = topPages.length ? topPages.map(function(p){
+      return '<tr><td class="q">'+shortPath(p.url)+'</td><td class="num">'+deNum(p.clicks)+'</td><td class="num">'+deNum(p.impr)+'</td><td class="num">'+dePos(p.pos)+'</td></tr>';
+    }).join('') : '<tr><td colspan="4" class="empty-hint">Kein Seiten-Reiter im Export gefunden.</td></tr>';
+
+    /* ---- CTR opportunities ---- */
+    var ctrOpp = computeCtrOpportunities(queries);
+    document.getElementById('ctr-table-body').innerHTML = ctrOpp.length ? ctrOpp.map(function(q){
+      var actual = q.impr? q.clicks/q.impr : 0;
+      return '<tr><td class="q">'+q.query+'</td><td class="num">'+dePct(actual).split(',')[0]+'&thinsp;%</td><td class="num">'+dePct(expectedCTR(q.pos)).split(',')[0]+'&thinsp;%</td><td class="num">'+dePos(q.pos)+'</td></tr>';
+    }).join('') : '<tr><td colspan="4" class="empty-hint">Keine auffälligen CTR-Abweichungen gefunden.</td></tr>';
+
+    /* ---- briefing keywords (rounds) & regional suggestions ---- */
+    document.getElementById('f-region').value = meta.region || '';
+    document.getElementById('f-services').value = (meta.services||[]).join(', ');
+    renderRoundsList(queries, meta.briefingRounds || [], data.compareQueries || null);
+    renderRegionalSuggestions(queries);
+    renderDomainsChips();
+  }
+
+  /* ============================================================
+     4. SAMPLE DATA (Erststart / Demo)
+  ============================================================ */
+  var SAMPLE_TREND = [
+    {label:"10.06.", clicks:14, impr:741, pos:12.57, partial:true},
+    {label:"15.06.", clicks:22, impr:1111, pos:17.17, partial:false},
+    {label:"22.06.", clicks:24, impr:1079, pos:18.37, partial:false},
+    {label:"29.06.", clicks:21, impr:1239, pos:17.19, partial:false},
+    {label:"06.07.", clicks:32, impr:1101, pos:17.19, partial:false},
+    {label:"13.07.", clicks:24, impr:1067, pos:16.64, partial:false},
+    {label:"20.07.", clicks:27, impr:994,  pos:14.60, partial:false},
+    {label:"27.07.", clicks:11, impr:1060, pos:14.94, partial:false},
+    {label:"03.08.", clicks:35, impr:1042, pos:14.80, partial:false},
+    {label:"10.08.", clicks:30, impr:1064, pos:16.09, partial:false},
+    {label:"17.08.", clicks:26, impr:1170, pos:17.33, partial:false},
+    {label:"24.08.", clicks:34, impr:1316, pos:16.03, partial:false},
+    {label:"31.08.", clicks:25, impr:1341, pos:15.44, partial:false},
+    {label:"07.09.", clicks:26, impr:1305, pos:14.08, partial:false},
+    {label:"14.09.", clicks:5,  impr:263,  pos:12.90, partial:true}
+  ];
+  var SAMPLE_MONTHS = [
+    {key:"2026-06", label:"Juni 26", clicks:72, impr:3321, pos:16.35, days:21, isFull:false},
+    {key:"2026-07", label:"Juli 26", clicks:102, impr:4866, pos:16.22, days:31, isFull:true},
+    {key:"2026-08", label:"Aug 26", clicks:130, impr:5049, pos:16.15, days:31, isFull:true},
+    {key:"2026-09", label:"Sep 26", clicks:52, impr:2657, pos:14.37, days:14, isFull:false}
+  ];
+  var SAMPLE_QUERIES = [
+    {query:"dr braunsteiner essen", clicks:30, impr:288, pos:2.02},
+    {query:"braunsteiner", clicks:17, impr:98, pos:7.05},
+    {query:"braunsteiner essen", clicks:15, impr:189, pos:1.83},
+    {query:"dr. braunsteiner essen", clicks:10, impr:120, pos:1.97},
+    {query:"braunsteiner zahnarzt", clicks:8, impr:175, pos:1.87},
+    {query:"zahnarzt rüttenscheid", clicks:8, impr:1261, pos:8.57},
+    {query:"zahnarzt essen rüttenscheid", clicks:6, impr:1158, pos:10.98},
+    {query:"parodontologie essen", clicks:0, impr:482, pos:41.88},
+    {query:"implantologen essen", clicks:0, impr:373, pos:17.45},
+    {query:"ästhetischer zahnersatz essen", clicks:0, impr:307, pos:22.64},
+    {query:"veneers essen", clicks:0, impr:267, pos:44.30},
+    {query:"parodontologie in essen", clicks:0, impr:177, pos:37.14}
+  ];
+  var SAMPLE_DEVICES = [
+    {name:"Mobil", clicks:212, impr:8656, pos:9.57},
+    {name:"Computer", clicks:140, impr:7078, pos:23.79},
+    {name:"Tablet", clicks:4, impr:159, pos:10.62}
+  ];
+  var SAMPLE_COUNTRIES = [
+    {name:"Deutschland", clicks:346, impr:14934, pos:15.92},
+    {name:"Türkei", clicks:2, impr:22, pos:9.41}
+  ];
+  var SAMPLE_PAGES = [
+    {url:"https://dr-braunsteiner.de/", clicks:289, impr:10416, pos:10.57},
+    {url:"https://dr-braunsteiner.de/kontakt/", clicks:17, impr:1729, pos:2.51},
+    {url:"https://dr-braunsteiner.de/aesthetik/", clicks:14, impr:2592, pos:28.27},
+    {url:"https://dr-braunsteiner.de/angstpatienten/", clicks:12, impr:878, pos:9.09},
+    {url:"https://dr-braunsteiner.de/laser/", clicks:7, impr:196, pos:10.50},
+    {url:"https://dr-braunsteiner.de/leistungen/", clicks:6, impr:1301, pos:2.57}
+  ];
+
+  /* ============================================================
+     5. BRANDING (accent colour / logo)
+  ============================================================ */
+  var ACCENT_PRESETS = ['#2a78d6','#0f9d58','#7c4dff','#d23669','#00897b','#f29900'];
+  var currentAccent = ACCENT_PRESETS[0];
+  var currentLogo = null;
+
+  function hexToSoft(hex){
+    var r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+    return 'rgba('+r+','+g+','+b+',0.12)';
+  }
+  function renderDomainsChips(){
+    var box = document.getElementById('domains-chips');
+    if (!box) return;
+    if (activeIndex<0 || !reports[activeIndex]){ box.innerHTML=''; return; }
+    var r = reports[activeIndex];
+    var domains = (r.meta.customerDomains || []).filter(function(d){ return d && d !== r.meta.website; });
+    box.innerHTML = domains.map(function(d){
+      return '<span class="kw-chip">'+d+' <small data-domain-del="'+d.replace(/"/g,'&quot;')+'" title="Entfernen">✕</small></span>';
+    }).join('');
+    Array.prototype.forEach.call(box.querySelectorAll('[data-domain-del]'), function(el){
+      el.addEventListener('click', function(){
+        if (activeIndex<0) return;
+        var d = el.getAttribute('data-domain-del');
+        reports[activeIndex].meta.customerDomains = (reports[activeIndex].meta.customerDomains||[]).filter(function(x){return x!==d;});
+        renderDomainsChips();
+      });
+    });
+  }
+  function renderSwatches(){
+    var row = document.getElementById('swatch-row');
+    row.innerHTML = ACCENT_PRESETS.map(function(c){
+      return '<button type="button" class="swatch'+(c===currentAccent?' active':'')+'" style="background:'+c+'" data-c="'+c+'" title="Akzentfarbe"></button>';
+    }).join('');
+    Array.prototype.forEach.call(row.querySelectorAll('.swatch'), function(sw){
+      sw.addEventListener('click', function(){ applyAccent(sw.getAttribute('data-c')); });
+    });
+  }
+  function applyAccent(hex){
+    currentAccent = hex;
+    document.documentElement.style.setProperty('--blue', hex);
+    document.documentElement.style.setProperty('--blue-soft', hexToSoft(hex));
+    renderSwatches();
+  }
+  function applyLogo(dataUrl){
+    currentLogo = dataUrl || null;
+    var heroLogo = document.getElementById('hero-logo');
+    var preview = document.getElementById('logo-preview');
+    if (currentLogo){ heroLogo.src=currentLogo; heroLogo.hidden=false; preview.src=currentLogo; preview.hidden=false; }
+    else { heroLogo.hidden=true; preview.hidden=true; }
+  }
+
+  /* ============================================================
+     6. PROFILES (localStorage, per-viewer convenience only)
+  ============================================================ */
+  function loadProfiles(){ try{ return JSON.parse(localStorage.getItem('gscrg_profiles')||'{}'); }catch(e){ return {}; } }
+  function saveProfilesObj(p){ try{ localStorage.setItem('gscrg_profiles', JSON.stringify(p)); }catch(e){} }
+  function refreshProfileSelect(selected){
+    var sel = document.getElementById('profile-select');
+    var profiles = loadProfiles();
+    sel.innerHTML = '<option value="">– neu –</option>' + Object.keys(profiles).sort().map(function(name){
+      return '<option value="'+name.replace(/"/g,'&quot;')+'">'+name+'</option>';
+    }).join('');
+    sel.value = (selected && profiles[selected]) ? selected : '';
+  }
+
+  /* ============================================================
+     7. WIRING (setup / multi-file reports / compare / tabs)
+  ============================================================ */
+  var viewSetup = document.getElementById('view-setup');
+  var viewReport = document.getElementById('view-report');
+  var sampleBanner = document.getElementById('sample-banner');
+  var setupError = document.getElementById('setup-error');
+  var subbar = document.getElementById('subbar');
+
+  var reports = [];
+  var activeIndex = -1;
+  var sampleMode = true;
+
+  function initSample(){
+    reports = [{
+      fileName:'Beispiel',
+      data:{mode:'daily', monthlyBuckets:SAMPLE_MONTHS, trendSeries:SAMPLE_TREND, queries:SAMPLE_QUERIES, devices:SAMPLE_DEVICES, countries:SAMPLE_COUNTRIES, pages:SAMPLE_PAGES, compareTotals:null},
+      meta:{website:"dr-braunsteiner.de", client:"Zahnarztpraxis Dr. Braunsteiner · Essen-Rüttenscheid", author:"SELLWERK SEO-Team", footer:"SELLWERK / Websmart · SEO-Team", brandTerm:"braunsteiner",
+        customerDomains:[],
+        briefingRounds:[
+          {id:'r1', label:'Erstbriefing', date:'2026-06-01', keywords:["Zahnarzt Essen","Implantologie","Kieferchirurgie","Parodontologie","Zahnersatz"]},
+          {id:'r2', label:'Praxis-Unterseite /praxis/', date:'2026-08-15', keywords:["Zahnarzt Essen-Rüttenscheid","Zahnärzte Praxisteam Essen","Zahnärzte Rüttenscheider Straße","Zahnarzt moderne Praxisräume Essen","Zahnarzt Meisterlabor Essen"]}
+        ],
+        region:"Essen-Rüttenscheid", services:["Zahnarzt","Implantologie","Kieferchirurgie","Parodontologie","Zahnersatz"],
+        periodStart:utcDay(2026,5,10), periodEnd:utcDay(2026,8,14), exportDate:"17.09.2026"}
+    }];
+    activeIndex = 0; sampleMode = true;
+  }
+
+  function showSetup(){ viewSetup.hidden = false; viewReport.hidden = true; subbar.hidden = true; setupError.style.display='none'; }
+  function showReport(){
+    viewSetup.hidden = true; viewReport.hidden = false; subbar.hidden = false;
+    sampleBanner.style.display = sampleMode ? '' : 'none';
+  }
+
+  function syncEditsToActive(){
+    if (activeIndex<0 || !reports[activeIndex]) return;
+    var r = reports[activeIndex];
+    r.meta.website = document.getElementById('f-website').textContent.trim();
+    r.meta.client = document.getElementById('f-client').textContent.trim();
+    r.meta.author = document.getElementById('f-author').textContent.trim();
+    r.meta.footer = document.getElementById('f-footer').textContent.trim();
+    r.meta.brandTerm = document.getElementById('f-brand').textContent.trim();
+    r.meta.region = document.getElementById('f-region').value.trim();
+    r.meta.services = (document.getElementById('f-services').value||'').split(',').map(function(s){return s.trim();}).filter(Boolean);
+  }
+
+  function renderTabs(){
+    var bar = document.getElementById('tabbar');
+    if (reports.length<2){ bar.hidden = true; bar.innerHTML=''; return; }
+    bar.hidden = false;
+    bar.innerHTML = reports.map(function(r,i){
+      var label = (r.meta.website||r.fileName||('Report '+(i+1)));
+      return '<button type="button" class="tab'+(i===activeIndex?' active':'')+'" data-i="'+i+'">'+label+'</button>';
+    }).join('');
+    Array.prototype.forEach.call(bar.querySelectorAll('.tab'), function(btn){
+      btn.addEventListener('click', function(){
+        syncEditsToActive();
+        activeIndex = +btn.getAttribute('data-i');
+        renderActive();
+      });
+    });
+  }
+
+  function renderActive(){
+    if (activeIndex<0 || !reports[activeIndex]) return;
+    var r = reports[activeIndex];
+    render(r.data, r.meta);
+    renderTabs();
+  }
+
+  function parseFileAsync(file){
+    return new Promise(function(resolve, reject){
+      var reader = new FileReader();
+      reader.onload = function(e){
+        try{
+          var data = new Uint8Array(e.target.result);
+          var wb = XLSX.read(data, {type:'array', cellDates:true});
+          var parsed = parseWorkbook(wb);
+          var agg = parsed.mode==='daily' ? buildFromDaily(parsed.dailyRows) : buildFromMonthly(parsed.monthlyRowsRaw);
+          var periodStart, periodEnd;
+          if (parsed.mode==='daily'){
+            periodStart = parsed.dailyRows[0].date; periodEnd = parsed.dailyRows[parsed.dailyRows.length-1].date;
+          } else {
+            periodStart = parsed.monthlyRowsRaw[0].start; periodEnd = parsed.monthlyRowsRaw[parsed.monthlyRowsRaw.length-1].end;
+          }
+          resolve({
+            fileName:file.name,
+            data:{mode:parsed.mode, monthlyBuckets:agg.monthlyBuckets, trendSeries:agg.trendSeries, queries:parsed.queries, devices:parsed.devices, countries:parsed.countries, pages:parsed.pages, compareTotals:null},
+            meta:{website: parsed.website || "deine-website.de", client:"", author:"SELLWERK SEO-Team", footer:"SELLWERK / Websmart · SEO-Team", brandTerm:null,
+              briefingRounds:[], region:'', services:[], customerDomains:[],
+              periodStart:periodStart, periodEnd:periodEnd, exportDate: fmtDateDE(new Date())}
+          });
+        }catch(err){ reject(err); }
+      };
+      reader.onerror = function(){ reject(new Error('Datei konnte nicht gelesen werden.')); };
+      reader.readAsArrayBuffer(file);
+    });
+  }
+
+  function handleFiles(fileList){
+    var files = Array.prototype.slice.call(fileList||[]);
+    if (!files.length) return;
+    Promise.all(files.map(function(f){
+      return parseFileAsync(f).then(function(r){ return r; }).catch(function(err){ return {error:err, fileName:f.name}; });
+    })).then(function(results){
+      var ok = results.filter(function(r){ return !r.error; });
+      var failed = results.filter(function(r){ return r.error; });
+      if (!ok.length){
+        setupError.textContent = "Keine der Dateien konnte gelesen werden: " + failed.map(function(f){return f.fileName+' ('+f.error.message+')';}).join('; ');
+        setupError.style.display = 'block';
+        return;
+      }
+      reports = ok; activeIndex = 0; sampleMode = false;
+      if (failed.length){
+        setupError.textContent = "Hinweis: folgende Datei(en) konnten nicht gelesen werden: " + failed.map(function(f){return f.fileName;}).join(', ');
+        setupError.style.display = 'block';
+      } else {
+        setupError.style.display = 'none';
+      }
+      renderActive();
+      showReport();
+    });
+  }
+
+  function refreshFromEdits(){
+    if (activeIndex<0) return;
+    syncEditsToActive();
+    renderActive();
+  }
+  ['f-website','f-client','f-author','f-brand'].forEach(function(id){
+    document.getElementById(id).addEventListener('blur', refreshFromEdits);
+  });
+
+  document.getElementById('btn-browse').addEventListener('click', function(){ document.getElementById('file-input').click(); });
+  document.getElementById('file-input').addEventListener('change', function(e){ handleFiles(e.target.files); e.target.value=''; });
+  document.getElementById('btn-new').addEventListener('click', showSetup);
+  document.getElementById('btn-load-own').addEventListener('click', showSetup);
+  document.getElementById('btn-print').addEventListener('click', function(){ syncEditsToActive(); window.print(); });
+
+  var dz = document.getElementById('dropzone');
+  dz.addEventListener('click', function(){ document.getElementById('file-input').click(); });
+  ['dragenter','dragover'].forEach(function(ev){ dz.addEventListener(ev, function(e){ e.preventDefault(); dz.classList.add('drag'); }); });
+  ['dragleave','drop'].forEach(function(ev){ dz.addEventListener(ev, function(e){ e.preventDefault(); dz.classList.remove('drag'); }); });
+  dz.addEventListener('drop', function(e){ handleFiles(e.dataTransfer.files); });
+
+  /* ---- compare-period upload ---- */
+  document.getElementById('btn-add-compare').addEventListener('click', function(){ document.getElementById('compare-input').click(); });
+  document.getElementById('compare-input').addEventListener('change', function(e){
+    var f = e.target.files[0]; e.target.value='';
+    if (!f || activeIndex<0) return;
+    parseFileAsync(f).then(function(res){
+      var totalsClicks = res.data.monthlyBuckets.reduce(function(s,b){return s+b.clicks;},0);
+      var totalsImpr = res.data.monthlyBuckets.reduce(function(s,b){return s+b.impr;},0);
+      var wPos = totalsImpr ? res.data.monthlyBuckets.reduce(function(s,b){return s+b.pos*b.impr;},0)/totalsImpr : 0;
+      var days = Math.max(1, Math.round((res.meta.periodEnd-res.meta.periodStart)/86400000)+1);
+      syncEditsToActive();
+      reports[activeIndex].data.compareTotals = {clicks:totalsClicks, impr:totalsImpr, pos:wPos, days:days, periodStart:res.meta.periodStart, periodEnd:res.meta.periodEnd};
+      reports[activeIndex].data.compareQueries = res.data.queries;
+      renderActive();
+    }).catch(function(err){ alert('Vergleichsdatei konnte nicht gelesen werden: '+err.message); });
+  });
+
+  /* ---- briefing-keyword rounds / regional suggestions ---- */
+  document.getElementById('f-round-date').value = new Date().toISOString().slice(0,10);
+  document.getElementById('btn-round-add').addEventListener('click', function(){
+    if (activeIndex<0) return;
+    var label = document.getElementById('f-round-label').value.trim() || 'Runde';
+    var date = document.getElementById('f-round-date').value || new Date().toISOString().slice(0,10);
+    var kws = parseKeywordLines(document.getElementById('f-round-keywords').value);
+    if (!kws.length){ alert('Bitte mindestens ein Keyword eintragen.'); return; }
+    var r = reports[activeIndex];
+    if (!r.meta.briefingRounds) r.meta.briefingRounds = [];
+    r.meta.briefingRounds.push({id:'r'+Date.now(), label:label, date:date, keywords:kws});
+    document.getElementById('f-round-label').value = '';
+    document.getElementById('f-round-keywords').value = '';
+    document.getElementById('f-round-date').value = new Date().toISOString().slice(0,10);
+    renderActive();
+  });
+  document.getElementById('btn-suggest-update').addEventListener('click', function(){
+    if (activeIndex<0) return;
+    renderRegionalSuggestions(reports[activeIndex].data.queries);
+  });
+
+  /* ---- weitere Kunden-Domains ---- */
+  document.getElementById('btn-domain-add').addEventListener('click', function(){
+    if (activeIndex<0) return;
+    var input = document.getElementById('f-domain-add');
+    var v = input.value.trim().replace(/^https?:\/\//i,'').replace(/\/$/,'');
+    if (!v) return;
+    var r = reports[activeIndex];
+    if (!r.meta.customerDomains) r.meta.customerDomains = [];
+    if (r.meta.customerDomains.indexOf(v)===-1) r.meta.customerDomains.push(v);
+    input.value = '';
+    renderDomainsChips();
+  });
+  document.getElementById('f-domain-add').addEventListener('keydown', function(e){
+    if (e.key==='Enter'){ e.preventDefault(); document.getElementById('btn-domain-add').click(); }
+  });
+
+  /* ---- branding ---- */
+  document.getElementById('btn-logo').addEventListener('click', function(){ document.getElementById('logo-input').click(); });
+  document.getElementById('logo-input').addEventListener('change', function(e){
+    var f = e.target.files[0]; e.target.value=''; if (!f) return;
+    var reader = new FileReader();
+    reader.onload = function(ev){ applyLogo(ev.target.result); };
+    reader.readAsDataURL(f);
+  });
+
+  /* ---- profiles ---- */
+  document.getElementById('btn-profile-save').addEventListener('click', function(){
+    syncEditsToActive();
+    if (activeIndex<0) return;
+    var r = reports[activeIndex];
+    var name = prompt('Profilname (z. B. Kunden-/Praxisname):', r.meta.website || '');
+    if (!name) return;
+    var profiles = loadProfiles();
+    var domains = r.meta.customerDomains || [];
+    if (r.meta.website && domains.indexOf(r.meta.website)===-1) domains = domains.concat([r.meta.website]);
+    profiles[name] = {website:r.meta.website, client:r.meta.client, author:r.meta.author, footer:r.meta.footer, brandTerm:r.meta.brandTerm, briefingRounds:r.meta.briefingRounds, region:r.meta.region, services:r.meta.services, domains:domains, accentColor:currentAccent, logoDataUrl:currentLogo};
+    saveProfilesObj(profiles);
+    refreshProfileSelect(name);
+  });
+  document.getElementById('profile-select').addEventListener('change', function(e){
+    var name = e.target.value;
+    if (!name || activeIndex<0) return;
+    var p = loadProfiles()[name];
+    if (!p) return;
+    var r = reports[activeIndex];
+    r.meta.website=p.website; r.meta.client=p.client; r.meta.author=p.author; r.meta.footer=p.footer; r.meta.brandTerm=p.brandTerm;
+    r.meta.briefingRounds = p.briefingRounds || (p.briefingKeywords && p.briefingKeywords.length ? [{id:'r'+Date.now(), label:'Übernommen', date:new Date().toISOString().slice(0,10), keywords:p.briefingKeywords}] : []);
+    r.meta.region=p.region||''; r.meta.services=p.services||[]; r.meta.customerDomains=p.domains||[];
+    if (p.accentColor) applyAccent(p.accentColor);
+    applyLogo(p.logoDataUrl||null);
+    renderActive();
+  });
+  document.getElementById('btn-profile-delete').addEventListener('click', function(){
+    var sel = document.getElementById('profile-select');
+    var name = sel.value;
+    if (!name) return;
+    var profiles = loadProfiles();
+    delete profiles[name];
+    saveProfilesObj(profiles);
+    refreshProfileSelect();
+  });
+
+  renderSwatches();
+  refreshProfileSelect();
+  initSample();
+  renderActive();
+  showReport();
+
+  /* ---- Sidebar-Navigation: Klick-Scroll + Active-State beim Scrollen ----
+     (erst NACH showReport() initialisieren, sonst sind die Sections noch
+     [hidden] und alle offsetTop-Werte wären 0) */
+  (function(){
+    var navLinks = Array.prototype.slice.call(document.querySelectorAll('.nav-link'));
+    if (!navLinks.length) return;
+    var targets = navLinks.map(function(a){
+      var id = a.getAttribute('href').slice(1);
+      return {a:a, el:document.getElementById(id)};
+    }).filter(function(t){ return t.el; });
+    navLinks.forEach(function(a){
+      a.addEventListener('click', function(e){
+        var el = document.getElementById(a.getAttribute('href').slice(1));
+        if (el){ e.preventDefault(); el.scrollIntoView({behavior:'smooth', block:'start'}); }
+      });
+    });
+    function setActiveByScroll(){
+      if (!targets.length || targets[0].el.offsetParent===null) return; // Report noch nicht sichtbar
+      var y = window.scrollY + 90;
+      var current = targets[0];
+      targets.forEach(function(t){ if (t.el.offsetTop <= y) current = t; });
+      navLinks.forEach(function(a){ a.classList.remove('active'); });
+      if (current) current.a.classList.add('active');
+    }
+    window.addEventListener('scroll', setActiveByScroll, {passive:true});
+    setActiveByScroll();
+  })();
+
+})();
+</script>
