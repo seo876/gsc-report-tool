@@ -320,14 +320,16 @@
     .welcome-bar{position:static; background:#fff!important; color:var(--ink-1)!important; padding:0 0 8px; border-bottom:1px solid var(--border);}
     body.has-logo .print-logo-header{
       display:flex; position:fixed; top:0; left:0; right:0; justify-content:center; align-items:center;
-      padding:8px 0 7px; background:#fff; border-bottom:2px solid var(--blue);
+      padding:4px 0 3px; background:#fff; border-bottom:1.5px solid var(--blue); z-index:50;
     }
-    body.has-logo .print-logo-header img{max-height:32px; max-width:220px; object-fit:contain;}
+    body.has-logo .print-logo-header img{max-height:20px; max-width:150px; object-fit:contain;}
     body.has-logo .hero-logo{display:none!important;}
     [contenteditable]{border-bottom:none!important;}
     .wrap{max-width:100%; padding:0 6px 20px;}
     .hero,.kpi,.chart-card,.card,.summary-card,.next-steps{box-shadow:none; break-inside:avoid; page-break-inside:avoid;}
     .section{break-inside:avoid; page-break-inside:avoid;}
+    .section-head{display:block; break-inside:avoid; page-break-inside:avoid;}
+    .section-head p,.table-note{orphans:4; widows:4;}
     .dash-row{grid-template-columns:2.2fr 1fr; break-inside:avoid; page-break-inside:avoid;}
     .kpi-grid{grid-template-columns:repeat(3,1fr); break-inside:avoid; page-break-inside:avoid;}
     .chart-grid{grid-template-columns:repeat(3,1fr); break-inside:avoid; page-break-inside:avoid;}
@@ -384,6 +386,9 @@
         <img id="logo-preview" class="logo-thumb" hidden>
         <input type="file" id="logo-input" accept="image/*">
       </div>
+      <p id="logo-print-hint" hidden style="font-size:10.5px; color:var(--ink-3); line-height:1.4; margin:2px 0 0;">
+        Für sauberes PDF: im Druckdialog unter „Mehr Einstellungen" die <b>Ränder auf „Standard"</b> stellen.
+      </p>
       <div class="sidenav-sep"></div>
       <span>Kundenprofil</span>
       <select id="profile-select"><option value="">– neu –</option></select>
@@ -1689,15 +1694,18 @@
     var preview = document.getElementById('logo-preview');
     var printImg = document.getElementById('print-logo-header-img');
     var pageStyle = document.getElementById('print-page-margin-style');
+    var printHint = document.getElementById('logo-print-hint');
     if (currentLogo){
       heroLogo.src=currentLogo; heroLogo.hidden=false; preview.src=currentLogo; preview.hidden=false;
       if (printImg) printImg.src = currentLogo;
       document.body.classList.add('has-logo');
-      if (pageStyle) pageStyle.textContent = '@page{ margin-top:28mm; }';
+      if (pageStyle) pageStyle.textContent = '@page{ margin-top:15mm; }';
+      if (printHint) printHint.hidden = false;
     } else {
       heroLogo.hidden=true; preview.hidden=true;
       document.body.classList.remove('has-logo');
       if (pageStyle) pageStyle.textContent = '';
+      if (printHint) printHint.hidden = true;
     }
   }
 
