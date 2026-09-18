@@ -613,7 +613,7 @@
         </div>
         <div class="card">
           <h3>Empfohlene regionale Keywords</h3>
-          <p class="table-note">Kombination aus Leistungen und Region nach gängigen Local-SEO-Mustern – als Content-Ideen, nicht als garantiertes Suchvolumen.</p>
+          <p class="table-note">Kombination aus Leistungen und Region nach gängigen Local-SEO-Mustern – als Content-Ideen, nicht als garantiertes Suchvolumen. Region und Leistungen werden automatisch aus den Suchanfragen geraten (kein echtes Wissen über den Kunden) – bitte kurz prüfen und bei Bedarf korrigieren.</p>
           <div class="field-row">
             <div>
               <div class="field-label">Region</div>
@@ -1030,6 +1030,49 @@
         renderActive();
       });
     });
+  }
+
+  /* ---- automatischer Vorschlag für Region & Leistungen aus den Suchanfragen ----
+     Da hier keine echte Unternehmensdatenbank angebunden ist, kann Region/Leistung
+     nicht "gewusst" werden – stattdessen wird aus den Suchanfragen selbst geraten:
+     das Wort, das sich mit den meisten UNTERSCHIEDLICHEN anderen Begriffen kombiniert
+     (z. B. "essen" taucht bei "zahnarzt essen", "implantologie essen" usw. auf),
+     ist mit hoher Wahrscheinlichkeit die Region. Die übrigen häufigen Begriffe sind
+     dann Leistungs-Kandidaten. Nur eine Vorbefüllung – bewusst leicht zu korrigieren. */
+  var GUESS_STOPWORDS = ['der','die','das','und','oder','fur','für','mit','von','bei','ist','sind','ein','eine','einen','einer','im','am','an','auf','zu','zum','zur','in','nahe','naehe','nähe','beste','bester','besten','test','kosten','kostenlos','preis','preise','erfahrung','erfahrungen','bewertung','bewertungen','bewertungen','online','jetzt','heute','offen','geoffnet','geöffnet','oeffnungszeiten','öffnungszeiten','adresse','telefon','kontakt','termin','anmelden','buchen','www','http','https','com','de'];
+  function tokenizeQueryWords(q){
+    return String(q||'').toLowerCase()
+      .replace(/[„""'()]/g,' ')
+      .replace(/[^a-z0-9äöüß\s-]/g,' ')
+      .split(/\s+/).map(function(t){return t.trim();}).filter(function(t){ return t.length>=3; });
+  }
+  function guessRegionAndServices(queries, brandTerm){
+    var brand = (brandTerm||'').toLowerCase();
+    var stats = {};
+    queries.forEach(function(q){
+      if (!q.impr) return;
+      var toks = tokenizeQueryWords(q.query).filter(function(t){
+        return t!==brand && GUESS_STOPWORDS.indexOf(t)===-1 && !/^\d+$/.test(t);
+      });
+      var uniq = [];
+      toks.forEach(function(t){ if (uniq.indexOf(t)===-1) uniq.push(t); });
+      uniq.forEach(function(t){
+        if (!stats[t]) stats[t] = {impr:0, partners:{}};
+        stats[t].impr += q.impr;
+        uniq.forEach(function(o){ if (o!==t) stats[t].partners[o]=true; });
+      });
+    });
+    var entries = Object.keys(stats).map(function(t){
+      return {token:t, impr:stats[t].impr, diversity:Object.keys(stats[t].partners).length};
+    });
+    if (!entries.length) return {region:'', services:[]};
+    var cap = function(s){ return s.charAt(0).toUpperCase()+s.slice(1); };
+    var regionCandidates = entries.filter(function(e){ return e.impr>=5 && e.diversity>=2; })
+      .sort(function(a,b){ return b.diversity-a.diversity || b.impr-a.impr; });
+    var region = regionCandidates.length ? regionCandidates[0].token : '';
+    var serviceCandidates = entries.filter(function(e){ return e.token!==region; })
+      .sort(function(a,b){ return b.impr-a.impr; }).slice(0,5).map(function(e){ return cap(e.token); });
+    return {region: region?cap(region):'', services: serviceCandidates};
   }
 
   /* ---- regional keyword suggestions (Local-SEO combinatorics) ---- */
@@ -1636,11 +1679,13 @@
           } else {
             periodStart = parsed.monthlyRowsRaw[0].start; periodEnd = parsed.monthlyRowsRaw[parsed.monthlyRowsRaw.length-1].end;
           }
+          var website0 = parsed.website || "deine-website.de";
+          var guess0 = guessRegionAndServices(parsed.queries, guessBrandTerm(website0));
           resolve({
             fileName:file.name,
             data:{mode:parsed.mode, monthlyBuckets:agg.monthlyBuckets, trendSeries:agg.trendSeries, queries:parsed.queries, devices:parsed.devices, countries:parsed.countries, pages:parsed.pages, compareTotals:null},
-            meta:{website: parsed.website || "deine-website.de", client:"", author:"SELLWERK SEO-Team", footer:"", brandTerm:null,
-              briefingRounds:[], region:'', services:[], customerDomains:[],
+            meta:{website: website0, client:"", author:"SELLWERK SEO-Team", footer:"", brandTerm:null,
+              briefingRounds:[], region:guess0.region, services:guess0.services, customerDomains:[],
               periodStart:periodStart, periodEnd:periodEnd, exportDate: fmtDateDE(new Date())}
           });
         }catch(err){ reject(err); }
@@ -1802,11 +1847,13 @@
       var countries = countryRows.map(function(r){ return {name:gscCountryName(r.keys[0]), clicks:r.clicks||0, impr:r.impressions||0, pos:r.position||0}; }).sort(function(a,b){ return b.clicks-a.clicks; }).slice(0,10);
       var pages = pageRows.map(function(r){ return {url:r.keys[0], clicks:r.clicks||0, impr:r.impressions||0, pos:r.position||0}; }).sort(function(a,b){ return b.clicks-a.clicks; });
 
+      var website1 = gscWebsiteFromSite(siteUrl);
+      var guess1 = guessRegionAndServices(queries, guessBrandTerm(website1));
       return {
-        fileName: 'GSC: ' + gscWebsiteFromSite(siteUrl),
+        fileName: 'GSC: ' + website1,
         data:{mode:'daily', monthlyBuckets:agg.monthlyBuckets, trendSeries:agg.trendSeries, queries:queries, devices:devices, countries:countries, pages:pages, compareTotals:null},
-        meta:{website: gscWebsiteFromSite(siteUrl), client:'', author:"SELLWERK SEO-Team", footer:"", brandTerm:null,
-          briefingRounds:[], region:'', services:[], customerDomains:[],
+        meta:{website: website1, client:'', author:"SELLWERK SEO-Team", footer:"", brandTerm:null,
+          briefingRounds:[], region:guess1.region, services:guess1.services, customerDomains:[],
           periodStart:dailyRows[0].date, periodEnd:dailyRows[dailyRows.length-1].date, exportDate: fmtDateDE(new Date())}
       };
     });
