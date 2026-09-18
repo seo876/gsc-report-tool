@@ -4,6 +4,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,500;0,700;0,900;1,400&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   :root{
     color-scheme: light;
@@ -412,6 +413,35 @@
       wie er direkt aus der Search Console exportiert wird. Es passiert nichts mit der Datei außer im Browser:
       die Auswertung läuft lokal, es wird nichts hochgeladen. Mehrere Dateien auf einmal auswählen, um
       mehrere Kunden nacheinander als Reports durchzugehen.
+    </div>
+
+    <div class="setup-note" id="gsc-connect-box" style="margin-top:14px;">
+      <b>Oder direkt mit Google Search Console verbinden</b> – ohne Excel-Export, Daten kommen live von Google.
+      <div style="margin-top:10px;">
+        <button class="btn" type="button" id="btn-gsc-login">
+          <svg viewBox="0 0 24 24" width="15" height="15"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          Mit Google anmelden
+        </button>
+      </div>
+      <div id="gsc-picker" hidden style="margin-top:14px;">
+        <div class="field-row">
+          <div>
+            <div class="field-label">Property</div>
+            <select class="field-input" id="gsc-site-select" style="min-width:260px;"></select>
+          </div>
+          <div>
+            <div class="field-label">Zeitraum</div>
+            <select class="field-input" id="gsc-range-select">
+              <option value="3">Letzte 3 Monate</option>
+              <option value="6" selected>Letzte 6 Monate</option>
+              <option value="12">Letzte 12 Monate</option>
+              <option value="16">Letzte 16 Monate</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-top:10px;"><button class="btn primary small" type="button" id="btn-gsc-load">Bericht aus Search Console laden</button></div>
+      </div>
+      <div id="gsc-status" style="margin-top:10px; font-size:12.5px; color:var(--ink-2);"></div>
     </div>
   </div>
 
@@ -1624,6 +1654,155 @@
   }
   ['f-website','f-client','f-author','f-brand'].forEach(function(id){
     document.getElementById(id).addEventListener('blur', refreshFromEdits);
+  });
+
+  /* ============================================================
+     7b. GOOGLE SEARCH CONSOLE — Live-OAuth-Login & Datenabruf
+  ============================================================ */
+  var GSC_CLIENT_ID = '1046410360925-4kq5ddhlpmcpea743v641kvlrd76fu16.apps.googleusercontent.com';
+  var GSC_SCOPE = 'https://www.googleapis.com/auth/webmasters.readonly';
+  var gscTokenClient = null;
+  var gscAccessToken = null;
+  var gscSites = [];
+
+  function gscSetStatus(msg, isError){
+    var el = document.getElementById('gsc-status');
+    if (!el) return;
+    el.textContent = msg || '';
+    el.style.color = isError ? 'var(--critical)' : 'var(--ink-2)';
+  }
+
+  function gscEnsureTokenClient(callback){
+    if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2){
+      gscSetStatus('Google-Login-Skript konnte nicht geladen werden. Bitte Seite neu laden (und ggf. Adblocker für diese Seite deaktivieren).', true);
+      return;
+    }
+    if (!gscTokenClient){
+      gscTokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: GSC_CLIENT_ID,
+        scope: GSC_SCOPE,
+        callback: function(resp){
+          if (resp && resp.access_token){
+            gscAccessToken = resp.access_token;
+            callback && callback();
+          } else {
+            gscSetStatus('Anmeldung fehlgeschlagen oder abgebrochen.', true);
+          }
+        },
+        error_callback: function(err){
+          gscSetStatus('Anmeldung nicht möglich: ' + ((err && err.type) || 'unbekannter Fehler') + '. Ist dieses Google-Konto als Testnutzer freigeschaltet?', true);
+        }
+      });
+    }
+    gscTokenClient.requestAccessToken({prompt: gscAccessToken ? '' : 'consent'});
+  }
+
+  function gscApiFetch(url, opts){
+    opts = opts || {};
+    opts.headers = Object.assign({'Authorization':'Bearer '+gscAccessToken}, opts.headers||{});
+    return fetch(url, opts).then(function(res){
+      if (res.status === 401){ gscAccessToken = null; throw new Error('Sitzung abgelaufen. Bitte oben erneut mit Google anmelden.'); }
+      if (!res.ok){
+        return res.json().catch(function(){ return null; }).then(function(body){
+          throw new Error((body && body.error && body.error.message) || ('GSC-API-Fehler ' + res.status));
+        });
+      }
+      return res.json();
+    });
+  }
+
+  function gscPrettySite(siteUrl){
+    if (siteUrl.indexOf('sc-domain:') === 0) return siteUrl.replace('sc-domain:','') + ' (Domainproperty)';
+    return siteUrl.replace(/^https?:\/\//,'').replace(/\/$/,'');
+  }
+  function gscWebsiteFromSite(siteUrl){
+    if (siteUrl.indexOf('sc-domain:') === 0) return siteUrl.replace('sc-domain:','');
+    try{ return new URL(siteUrl).hostname.replace(/^www\./,''); }catch(e){ return siteUrl; }
+  }
+
+  var GSC_COUNTRY_NAMES = {deu:'Deutschland', aut:'Österreich', che:'Schweiz', usa:'USA', gbr:'Großbritannien', fra:'Frankreich', ita:'Italien', esp:'Spanien', nld:'Niederlande', pol:'Polen', bel:'Belgien', lux:'Luxemburg', dnk:'Dänemark', swe:'Schweden', nor:'Norwegen', prt:'Portugal', cze:'Tschechien'};
+  function gscCountryName(code){ code = (code||'').toLowerCase(); return GSC_COUNTRY_NAMES[code] || (code ? code.toUpperCase() : '—'); }
+  var GSC_DEVICE_NAMES = {DESKTOP:'Desktop', MOBILE:'Mobil', TABLET:'Tablet'};
+  function gscDeviceName(d){ return GSC_DEVICE_NAMES[d] || d; }
+  function gscFmtDate(d){ return d.getUTCFullYear()+'-'+pad2(d.getUTCMonth()+1)+'-'+pad2(d.getUTCDate()); }
+
+  function gscListSites(){
+    gscSetStatus('Lade Properties …');
+    gscApiFetch('https://www.googleapis.com/webmasters/v3/sites').then(function(res){
+      var all = res.siteEntry || [];
+      gscSites = all.filter(function(s){ return s.permissionLevel && s.permissionLevel !== 'siteUnverifiedUser'; });
+      if (!gscSites.length) gscSites = all;
+      if (!gscSites.length){ gscSetStatus('Für dieses Google-Konto sind keine Search-Console-Properties hinterlegt.', true); return; }
+      var sel = document.getElementById('gsc-site-select');
+      sel.innerHTML = gscSites.map(function(s){ return '<option value="'+s.siteUrl.replace(/"/g,'&quot;')+'">'+gscPrettySite(s.siteUrl)+'</option>'; }).join('');
+      document.getElementById('btn-gsc-login').hidden = true;
+      document.getElementById('gsc-picker').hidden = false;
+      gscSetStatus('Angemeldet. Property und Zeitraum wählen, dann Bericht laden.');
+    }).catch(function(err){ gscSetStatus(err.message, true); });
+  }
+
+  function gscQuery(siteUrl, startDate, endDate, dims, rowLimit){
+    var body = {startDate:startDate, endDate:endDate, dimensions:dims, rowLimit: rowLimit||25000, dataState:'all'};
+    return gscApiFetch('https://www.googleapis.com/webmasters/v3/sites/'+encodeURIComponent(siteUrl)+'/searchAnalytics/query', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
+    }).then(function(res){ return res.rows || []; });
+  }
+
+  function gscBuildReportData(siteUrl, months){
+    var today = new Date();
+    var end = utcDay(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
+    end.setUTCDate(end.getUTCDate() - 3); // Search Console hinkt der Realität ca. 2-3 Tage hinterher
+    var start = utcDay(end.getUTCFullYear(), end.getUTCMonth() - months, end.getUTCDate() + 1);
+    var startStr = gscFmtDate(start), endStr = gscFmtDate(end);
+
+    return Promise.all([
+      gscQuery(siteUrl, startStr, endStr, ['date'], 25000),
+      gscQuery(siteUrl, startStr, endStr, ['query'], 1000),
+      gscQuery(siteUrl, startStr, endStr, ['device'], 10),
+      gscQuery(siteUrl, startStr, endStr, ['country'], 50),
+      gscQuery(siteUrl, startStr, endStr, ['page'], 1000)
+    ]).then(function(results){
+      var dateRows = results[0], queryRows = results[1], deviceRows = results[2], countryRows = results[3], pageRows = results[4];
+      if (!dateRows.length) throw new Error('Für diese Property und diesen Zeitraum liefert Search Console keine Daten.');
+
+      var dailyRows = dateRows.map(function(r){ return {date: parseISODateStr(r.keys[0]), clicks:r.clicks||0, impr:r.impressions||0, pos:r.position||0}; }).filter(function(d){ return d.date; });
+      dailyRows.sort(function(a,b){ return a.date-b.date; });
+      var agg = buildFromDaily(dailyRows);
+
+      var queries = queryRows.map(function(r){ return {query:r.keys[0], clicks:r.clicks||0, impr:r.impressions||0, pos:r.position||0}; }).sort(function(a,b){ return b.clicks-a.clicks; });
+      var devices = deviceRows.map(function(r){ return {name:gscDeviceName(r.keys[0]), clicks:r.clicks||0, impr:r.impressions||0, pos:r.position||0}; }).sort(function(a,b){ return b.clicks-a.clicks; });
+      var countries = countryRows.map(function(r){ return {name:gscCountryName(r.keys[0]), clicks:r.clicks||0, impr:r.impressions||0, pos:r.position||0}; }).sort(function(a,b){ return b.clicks-a.clicks; }).slice(0,10);
+      var pages = pageRows.map(function(r){ return {url:r.keys[0], clicks:r.clicks||0, impr:r.impressions||0, pos:r.position||0}; }).sort(function(a,b){ return b.clicks-a.clicks; });
+
+      return {
+        fileName: 'GSC: ' + gscWebsiteFromSite(siteUrl),
+        data:{mode:'daily', monthlyBuckets:agg.monthlyBuckets, trendSeries:agg.trendSeries, queries:queries, devices:devices, countries:countries, pages:pages, compareTotals:null},
+        meta:{website: gscWebsiteFromSite(siteUrl), client:'', author:"SELLWERK SEO-Team", footer:"SELLWERK / Websmart · SEO-Team", brandTerm:null,
+          briefingRounds:[], region:'', services:[], customerDomains:[],
+          periodStart:dailyRows[0].date, periodEnd:dailyRows[dailyRows.length-1].date, exportDate: fmtDateDE(new Date())}
+      };
+    });
+  }
+
+  document.getElementById('btn-gsc-login').addEventListener('click', function(){
+    gscSetStatus('Google-Login wird geöffnet …');
+    gscEnsureTokenClient(gscListSites);
+  });
+  document.getElementById('btn-gsc-load').addEventListener('click', function(){
+    var siteUrl = document.getElementById('gsc-site-select').value;
+    var months = +document.getElementById('gsc-range-select').value || 6;
+    if (!siteUrl || !gscAccessToken) return;
+    var btn = document.getElementById('btn-gsc-load');
+    btn.disabled = true;
+    gscSetStatus('Lade Daten aus Search Console …');
+    gscBuildReportData(siteUrl, months).then(function(r){
+      reports = [r]; activeIndex = 0; sampleMode = false;
+      renderActive();
+      showReport();
+      gscSetStatus('');
+    }).catch(function(err){
+      gscSetStatus(err.message, true);
+    }).finally(function(){ btn.disabled = false; });
   });
 
   document.getElementById('btn-browse').addEventListener('click', function(){ document.getElementById('file-input').click(); });
