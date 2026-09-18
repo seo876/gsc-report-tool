@@ -196,6 +196,7 @@
   .kpi-delta.up{color:var(--good);} .kpi-delta.down{color:var(--critical);} .kpi-delta.flat{color:var(--ink-3);}
   .kpi-delta svg{width:12px;height:12px;}
   .kpi-note{font-size:11.5px; color:var(--ink-3); margin-top:2px;}
+  .kpi-desc{font-size:11px; color:var(--ink-3); margin-top:8px; padding-top:8px; border-top:1px solid var(--border); line-height:1.45;}
 
   .chart-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:14px;}
   @media (max-width:860px){.chart-grid{grid-template-columns:1fr;}}
@@ -490,10 +491,12 @@
         <h2>Auf einen Blick</h2>
         <p id="kpi-period-note">Gesamtzeitraum</p>
       </div>
+      <p class="table-note" style="margin-top:-6px;">Die wichtigsten Kennzahlen aus der Google-Suche für den Betrachtungszeitraum – wie oft die Website gefunden und angeklickt wurde und wie gut sie platziert ist.</p>
       <div class="dash-row">
         <div class="kpi-grid" id="kpi-grid"></div>
         <div class="next-steps">
           <h3>Empfehlungen für die nächste Runde</h3>
+          <p class="table-note">Automatisch erkannte Punkte mit dem größten kurzfristigen Hebel für mehr Sichtbarkeit und Klicks.</p>
           <ul id="next-steps-list"></ul>
         </div>
       </div>
@@ -504,28 +507,34 @@
         <h2 id="trend-title">Entwicklung pro Woche</h2>
         <p id="trend-note"></p>
       </div>
+      <p class="table-note" style="margin-top:-6px;">Zeigt, wie sich Klicks, Impressionen und die durchschnittliche Position in Google über den Zeitraum entwickelt haben – gestrichelte Linien markieren unvollständige Wochen am Rand des Exports.</p>
       <div class="chart-grid" id="chart-grid"></div>
     </div>
 
     <div class="section" id="sec-visibility">
       <div class="section-head">
         <h2>Sichtbarkeit &amp; Marke</h2>
-        <p>Basis: erfasste Suchanfragen im Export</p>
+        <p>Wie gut die Website in Google platziert ist und wie viele Klicks über den Firmennamen bzw. über allgemeine Suchbegriffe kommen</p>
       </div>
       <div class="strip">
         <div class="card">
           <h3>Sichtbarkeit nach Position</h3>
+          <p class="table-note">Anteil der Impressionen nach Positionsbereich in der Google-Suche – je mehr davon in Position 1–3, desto sichtbarer die Website.</p>
           <div id="position-bands"></div>
         </div>
         <div class="card">
           <h3>Marke vs. Nicht-Marke</h3>
+          <p class="table-note">Klicks über die Suche nach dem Firmennamen selbst (Marke) im Vergleich zu Klicks über allgemeine Suchbegriffe (Nicht-Marke) – Letzteres zeigt die aktiv erarbeitete SEO-Sichtbarkeit.</p>
           <div class="split-compare" id="brand-split"></div>
         </div>
       </div>
     </div>
 
     <div class="section">
-      <div class="section-head"><h2>Monatsübersicht &amp; Kanäle</h2></div>
+      <div class="section-head">
+        <h2>Monatsübersicht &amp; Kanäle</h2>
+        <p>Klicks und Impressionen im Monatsverlauf sowie die Verteilung nach Gerät und Herkunftsland</p>
+      </div>
       <div class="strip">
         <div class="card">
           <h3>Klicks &amp; Impressionen pro Monat</h3>
@@ -537,6 +546,7 @@
         </div>
         <div class="card">
           <h3>Gerät &amp; Herkunft</h3>
+          <p class="table-note">Über welche Geräte (Mobil/Desktop/Tablet) und aus welchem Land die meisten Klicks kommen.</p>
           <div class="bars" id="device-bars"></div>
           <div style="margin-top:16px; padding-top:14px; border-top:1px solid var(--border);" id="device-kv"></div>
         </div>
@@ -544,7 +554,10 @@
     </div>
 
     <div class="section" id="sec-queries">
-      <div class="section-head"><h2>Suchanfragen im Detail</h2></div>
+      <div class="section-head">
+        <h2>Suchanfragen im Detail</h2>
+        <p>Die wichtigsten Suchbegriffe: was bereits gut läuft und wo noch Potenzial liegt</p>
+      </div>
       <div class="table-grid">
         <div class="card">
           <h3><span class="chip good"><span class="dot"></span>Läuft bereits stark</span></h3>
@@ -612,11 +625,14 @@
     </div>
 
     <div class="section" id="sec-pages">
-      <div class="section-head"><h2>Seiten &amp; CTR-Chancen</h2></div>
+      <div class="section-head">
+        <h2>Seiten &amp; CTR-Chancen</h2>
+        <p>Welche Unterseiten die meisten Klicks bringen und wo die Klickrate niedriger ist, als für die jeweilige Position üblich</p>
+      </div>
       <div class="table-grid">
         <div class="card">
           <h3>Top-Landingpages</h3>
-          <p class="table-note">Welche Seiten bringen die Klicks.</p>
+          <p class="table-note">Die Unterseiten, über die Besucher am häufigsten aus der Google-Suche auf die Website kommen.</p>
           <table>
             <thead><tr><th>Seite</th><th class="num">Klicks</th><th class="num">Impr.</th><th class="num">Ø Pos.</th></tr></thead>
             <tbody id="pages-table-body"></tbody>
@@ -624,7 +640,7 @@
         </div>
         <div class="card">
           <h3>CTR-Auffälligkeiten</h3>
-          <p class="table-note">CTR deutlich unter dem für die Position üblichen Wert – Title/Meta-Description prüfen.</p>
+          <p class="table-note">CTR = Klickrate, also wie oft ein Suchergebnis tatsächlich angeklickt wird, wenn es angezeigt wird. Hier liegt sie deutlich unter dem für die jeweilige Position üblichen Wert – ein Hinweis, den Seitentitel/die Meta-Description zu überarbeiten.</p>
           <table>
             <thead><tr><th>Suchanfrage</th><th class="num">CTR</th><th class="num">Erwartet</th><th class="num">Ø Pos.</th></tr></thead>
             <tbody id="ctr-table-body"></tbody>
@@ -634,7 +650,7 @@
     </div>
 
     <footer>
-      <div contenteditable="true" id="f-footer">SELLWERK / Websmart · SEO-Team</div>
+      <div contenteditable="true" id="f-footer" data-placeholder="Team-/Agentur-Kennzeichnung eintragen (optional)"></div>
       <div id="f-source">Quelle: Google Search Console Performance-Export</div>
     </footer>
 
@@ -1271,12 +1287,12 @@
     var clicksNote = compareMode ? 'vs. Vorperiode' : clicksCompareLabel;
     var posNote = compareMode ? 'vs. Vorperiode (niedriger = besser)' : (first.label+' → '+last.label+' (niedriger = besser)');
     document.getElementById('kpi-grid').innerHTML =
-      '<div class="kpi">'+ICON_SEARCH+'<div class="kpi-label">Top-Suchanfrage</div><div class="kpi-value" style="font-size:19px; line-height:1.3;">'+(topQuery?topQuery.query:'–')+'</div><div class="kpi-note">'+(topQuery?deNum(topQuery.clicks)+' Klicks, Pos. '+dePos(topQuery.pos):'Keine Daten')+'</div></div>'+
-      '<div class="kpi">'+ICON_TARGET+'<div class="kpi-label">Beste Position</div><div class="kpi-value">'+(bestPosQuery?dePos(bestPosQuery.pos):'–')+'</div><div class="kpi-note">'+(bestPosQuery?'„'+bestPosQuery.query+'"':'Keine Daten')+'</div></div>'+
-      '<div class="kpi">'+ICON_PAGE+'<div class="kpi-label">Keywords auf Seite 1</div><div class="kpi-value">'+onPage1Count+'</div><div class="kpi-note">von '+qWithImpr.length+' erfassten Suchanfragen</div></div>'+
-      '<div class="kpi"><div class="bar" style="background:var(--blue)"></div>'+ICON_CLICK+'<div class="kpi-label">Klicks gesamt</div><div class="kpi-value">'+deNum(totalClicks)+'</div><div class="kpi-delta" id="d-clicks"></div><div class="kpi-note">'+clicksNote+'</div></div>'+
-      '<div class="kpi"><div class="bar" style="background:var(--orange)"></div>'+ICON_EYE+'<div class="kpi-label">Impressionen gesamt</div><div class="kpi-value">'+deNum(totalImpr)+'</div><div class="kpi-delta" id="d-impr"></div><div class="kpi-note">Ø Tageswert, '+(compareMode?'vs. Vorperiode':(first.label+' → '+last.label))+'</div></div>'+
-      '<div class="kpi"><div class="bar" style="background:var(--good)"></div>'+ICON_TREND+'<div class="kpi-label">Ø Position</div><div class="kpi-value">'+dePos(weightedPos)+'</div><div class="kpi-delta" id="d-pos"></div><div class="kpi-note">'+posNote+'</div></div>';
+      '<div class="kpi">'+ICON_SEARCH+'<div class="kpi-label">Top-Suchanfrage</div><div class="kpi-value" style="font-size:19px; line-height:1.3;">'+(topQuery?topQuery.query:'–')+'</div><div class="kpi-note">'+(topQuery?deNum(topQuery.clicks)+' Klicks, Pos. '+dePos(topQuery.pos):'Keine Daten')+'</div><div class="kpi-desc">Der Suchbegriff, der die meisten Klicks auf die Website gebracht hat.</div></div>'+
+      '<div class="kpi">'+ICON_TARGET+'<div class="kpi-label">Beste Position</div><div class="kpi-value">'+(bestPosQuery?dePos(bestPosQuery.pos):'–')+'</div><div class="kpi-note">'+(bestPosQuery?'„'+bestPosQuery.query+'"':'Keine Daten')+'</div><div class="kpi-desc">Der Suchbegriff mit dem besten Google-Ranking im Zeitraum.</div></div>'+
+      '<div class="kpi">'+ICON_PAGE+'<div class="kpi-label">Keywords auf Seite 1</div><div class="kpi-value">'+onPage1Count+'</div><div class="kpi-note">von '+qWithImpr.length+' erfassten Suchanfragen</div><div class="kpi-desc">Anzahl der Suchbegriffe, die es auf die erste Google-Ergebnisseite (Position 1–10) geschafft haben.</div></div>'+
+      '<div class="kpi"><div class="bar" style="background:var(--blue)"></div>'+ICON_CLICK+'<div class="kpi-label">Klicks gesamt</div><div class="kpi-value">'+deNum(totalClicks)+'</div><div class="kpi-delta" id="d-clicks"></div><div class="kpi-note">'+clicksNote+'</div><div class="kpi-desc">Wie oft im Zeitraum auf ein Suchergebnis der Website geklickt wurde.</div></div>'+
+      '<div class="kpi"><div class="bar" style="background:var(--orange)"></div>'+ICON_EYE+'<div class="kpi-label">Impressionen gesamt</div><div class="kpi-value">'+deNum(totalImpr)+'</div><div class="kpi-delta" id="d-impr"></div><div class="kpi-note">Ø Tageswert, '+(compareMode?'vs. Vorperiode':(first.label+' → '+last.label))+'</div><div class="kpi-desc">Wie oft die Website in den Google-Suchergebnissen angezeigt wurde – auch ohne Klick.</div></div>'+
+      '<div class="kpi"><div class="bar" style="background:var(--good)"></div>'+ICON_TREND+'<div class="kpi-label">Ø Position</div><div class="kpi-value">'+dePos(weightedPos)+'</div><div class="kpi-delta" id="d-pos"></div><div class="kpi-note">'+posNote+'</div><div class="kpi-desc">Durchschnittliche Platzierung der Website in der Google-Suche – je niedriger die Zahl, desto besser.</div></div>';
 
     /* ---- Empfehlungen-Panel (Boostability-Style „Required Actions", hier positiv formuliert) ---- */
     var nextSteps = [];
@@ -1611,7 +1627,7 @@
           resolve({
             fileName:file.name,
             data:{mode:parsed.mode, monthlyBuckets:agg.monthlyBuckets, trendSeries:agg.trendSeries, queries:parsed.queries, devices:parsed.devices, countries:parsed.countries, pages:parsed.pages, compareTotals:null},
-            meta:{website: parsed.website || "deine-website.de", client:"", author:"SELLWERK SEO-Team", footer:"SELLWERK / Websmart · SEO-Team", brandTerm:null,
+            meta:{website: parsed.website || "deine-website.de", client:"", author:"SELLWERK SEO-Team", footer:"", brandTerm:null,
               briefingRounds:[], region:'', services:[], customerDomains:[],
               periodStart:periodStart, periodEnd:periodEnd, exportDate: fmtDateDE(new Date())}
           });
@@ -1777,7 +1793,7 @@
       return {
         fileName: 'GSC: ' + gscWebsiteFromSite(siteUrl),
         data:{mode:'daily', monthlyBuckets:agg.monthlyBuckets, trendSeries:agg.trendSeries, queries:queries, devices:devices, countries:countries, pages:pages, compareTotals:null},
-        meta:{website: gscWebsiteFromSite(siteUrl), client:'', author:"SELLWERK SEO-Team", footer:"SELLWERK / Websmart · SEO-Team", brandTerm:null,
+        meta:{website: gscWebsiteFromSite(siteUrl), client:'', author:"SELLWERK SEO-Team", footer:"", brandTerm:null,
           briefingRounds:[], region:'', services:[], customerDomains:[],
           periodStart:dailyRows[0].date, periodEnd:dailyRows[dailyRows.length-1].date, exportDate: fmtDateDE(new Date())}
       };
