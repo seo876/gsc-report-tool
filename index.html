@@ -383,7 +383,7 @@
 
     <div class="welcome-bar">
       <div class="wtext" id="welcome-text">Willkommen zurück<span id="welcome-name"></span>!</div>
-      <div class="welcome-bar-actions">
+      <div class="welcome-bar-actions" id="welcome-actions">
         <button class="btn small" id="btn-new">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6h6M20 20v-6h-6"/><path d="M20 10a8 8 0 0 0-14.3-4.6M4 14a8 8 0 0 0 14.3 4.6"/></svg>
           Neue Datei
@@ -399,6 +399,41 @@
 
   <!-- ======================= SETUP ======================= -->
   <div id="view-setup" hidden>
+
+    <!-- ---- primärer Einstieg: Google-Login ---- -->
+    <div class="drop" id="gsc-connect-box" style="cursor:default;">
+      <svg class="drop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      <h2>Mit Google Search Console verbinden</h2>
+      <p>Kunde auswählen, Zeitraum festlegen – die Auswertung läuft direkt mit den Live-Daten aus Google.</p>
+      <div style="margin-top:16px;">
+        <button class="btn primary" type="button" id="btn-gsc-login">
+          <svg viewBox="0 0 24 24" width="15" height="15"><path fill="#fff" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" opacity=".92"/><path fill="#fff" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" opacity=".92"/><path fill="#fff" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" opacity=".92"/><path fill="#fff" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" opacity=".92"/></svg>
+          Mit Google anmelden
+        </button>
+      </div>
+      <div id="gsc-picker" hidden style="margin-top:18px; text-align:left; max-width:420px; margin-left:auto; margin-right:auto;">
+        <div class="field-row">
+          <div>
+            <div class="field-label">Kunde (Property)</div>
+            <select class="field-input" id="gsc-site-select" style="min-width:260px;"></select>
+          </div>
+          <div>
+            <div class="field-label">Zeitraum</div>
+            <select class="field-input" id="gsc-range-select">
+              <option value="3">Letzte 3 Monate</option>
+              <option value="6" selected>Letzte 6 Monate</option>
+              <option value="12">Letzte 12 Monate</option>
+              <option value="16">Letzte 16 Monate</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-top:10px;"><button class="btn primary small" type="button" id="btn-gsc-load">Auswertung starten</button></div>
+      </div>
+      <div id="gsc-status" style="margin-top:12px; font-size:12.5px; color:var(--ink-2);"></div>
+    </div>
+
+    <!-- ---- sekundärer Einstieg: Excel-Upload ---- -->
+    <div class="or" style="text-align:center; margin:18px 0;">— oder ohne Google-Login —</div>
     <div class="drop" id="dropzone">
       <svg class="drop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
       <h2>GSC-Performance-Export hochladen</h2>
@@ -415,35 +450,7 @@
       die Auswertung läuft lokal, es wird nichts hochgeladen. Mehrere Dateien auf einmal auswählen, um
       mehrere Kunden nacheinander als Reports durchzugehen.
     </div>
-
-    <div class="setup-note" id="gsc-connect-box" style="margin-top:14px;">
-      <b>Oder direkt mit Google Search Console verbinden</b> – ohne Excel-Export, Daten kommen live von Google.
-      <div style="margin-top:10px;">
-        <button class="btn" type="button" id="btn-gsc-login">
-          <svg viewBox="0 0 24 24" width="15" height="15"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-          Mit Google anmelden
-        </button>
-      </div>
-      <div id="gsc-picker" hidden style="margin-top:14px;">
-        <div class="field-row">
-          <div>
-            <div class="field-label">Property</div>
-            <select class="field-input" id="gsc-site-select" style="min-width:260px;"></select>
-          </div>
-          <div>
-            <div class="field-label">Zeitraum</div>
-            <select class="field-input" id="gsc-range-select">
-              <option value="3">Letzte 3 Monate</option>
-              <option value="6" selected>Letzte 6 Monate</option>
-              <option value="12">Letzte 12 Monate</option>
-              <option value="16">Letzte 16 Monate</option>
-            </select>
-          </div>
-        </div>
-        <div style="margin-top:10px;"><button class="btn primary small" type="button" id="btn-gsc-load">Bericht aus Search Console laden</button></div>
-      </div>
-      <div id="gsc-status" style="margin-top:10px; font-size:12.5px; color:var(--ink-2);"></div>
-    </div>
+    <p style="text-align:center; margin-top:16px;"><a href="#" id="link-sample" style="font-size:12.5px; color:var(--ink-3);">Beispiel-Bericht ansehen</a></p>
   </div>
 
   <!-- ======================= REPORT ======================= -->
@@ -1565,9 +1572,17 @@
     activeIndex = 0; sampleMode = true;
   }
 
-  function showSetup(){ viewSetup.hidden = false; viewReport.hidden = true; subbar.hidden = true; setupError.style.display='none'; }
+  var sidenavNav = document.getElementById('sidenav-nav');
+  var welcomeActions = document.getElementById('welcome-actions');
+  function showSetup(){
+    viewSetup.hidden = false; viewReport.hidden = true; subbar.hidden = true; setupError.style.display='none';
+    if (sidenavNav) sidenavNav.hidden = true;
+    if (welcomeActions) welcomeActions.hidden = true;
+  }
   function showReport(){
     viewSetup.hidden = true; viewReport.hidden = false; subbar.hidden = false;
+    if (sidenavNav) sidenavNav.hidden = false;
+    if (welcomeActions) welcomeActions.hidden = false;
     sampleBanner.style.display = sampleMode ? '' : 'none';
   }
 
@@ -1933,8 +1948,16 @@
   renderSwatches();
   refreshProfileSelect();
   initSample();
-  renderActive();
-  showReport();
+  showSetup();
+
+  var linkSample = document.getElementById('link-sample');
+  if (linkSample){
+    linkSample.addEventListener('click', function(e){
+      e.preventDefault();
+      renderActive();
+      showReport();
+    });
+  }
 
   /* ---- Sidebar-Navigation: Klick-Scroll + Active-State beim Scrollen ----
      (erst NACH showReport() initialisieren, sonst sind die Sections noch
