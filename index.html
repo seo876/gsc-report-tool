@@ -311,7 +311,7 @@
 
   @media print{
     body{background:#fff;}
-    .sidenav,.welcome-bar-actions,.banner,.tabbar,.compare-row,#btn-add-compare,#view-setup,#round-add-form,#btn-suggest-update,#f-domain-add,#btn-domain-add{display:none!important;}
+    .sidenav,.welcome-bar-actions,.banner,.tabbar,.compare-row,#btn-add-compare,#view-setup,#round-add-form,#btn-suggest-update,#f-domain-add,#btn-domain-add,#f-meta-task-page,#f-meta-task-note,#btn-meta-task-add,[data-meta-take],[data-meta-task-del]{display:none!important;}
     .app-shell{display:block;}
     .main-col{width:100%;}
     .welcome-bar{position:static; background:#fff!important; color:var(--ink-1)!important; padding:0 0 8px; border-bottom:1px solid var(--border);}
@@ -357,6 +357,10 @@
       <a class="nav-link" href="#sec-pages">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
         Seiten &amp; CTR
+      </a>
+      <a class="nav-link" href="#sec-meta">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        Title/Meta/ALT
       </a>
     </nav>
 
@@ -656,6 +660,42 @@
       </div>
     </div>
 
+    <div class="section" id="sec-meta">
+      <div class="section-head">
+        <h2>Title, Meta-Description &amp; ALT-Texte</h2>
+        <p>Der GSC-Export zeigt nicht, was aktuell im Title, der Meta-Description oder den Bild-ALT-Texten steht – nur, wo die Klickrate darauf hindeutet, dass sich ein Blick lohnt. Die konkrete Überarbeitung wird rechts als To-do festgehalten.</p>
+      </div>
+      <div class="table-grid">
+        <div class="card">
+          <h3>Seiten mit dem größten Handlungsbedarf</h3>
+          <p class="table-note">Seiten, deren Klickrate am deutlichsten unter dem für ihre Position üblichen Wert liegt, sortiert nach geschätzt entgangenen Klicks. Meist ein Zeichen für einen wenig ansprechenden Title/Meta-Description.</p>
+          <table>
+            <thead><tr><th>Seite</th><th class="num">CTR</th><th class="num">Erwartet</th><th class="num">Ø Pos.</th><th class="num">Entgangen*</th></tr></thead>
+            <tbody id="meta-action-table-body"></tbody>
+          </table>
+          <p class="table-note" style="margin-top:12px;">* geschätzte zusätzliche Klicks im Zeitraum, wäre die CTR auf dem für die Position üblichen Niveau.</p>
+        </div>
+        <div class="card">
+          <h3>Checkliste: Title / Meta-Description / ALT-Texte</h3>
+          <p class="table-note">Manuell geführte To-do-Liste, z. B. übernommen aus der Liste links oder frei eingetragen – wird mit dem Kundenprofil gespeichert.</p>
+          <div id="meta-tasks-list"></div>
+          <div style="border-top:1px solid var(--border); margin-top:10px; padding-top:14px;">
+            <div class="field-row">
+              <div>
+                <div class="field-label">Seite / Bereich</div>
+                <input type="text" class="field-input" id="f-meta-task-page" placeholder="z. B. /leistungen/ oder Startseite-Bilder">
+              </div>
+              <div>
+                <div class="field-label">Was überarbeiten</div>
+                <input type="text" class="field-input" id="f-meta-task-note" placeholder="z. B. Title &amp; Meta-Description neu, ALT-Texte ergänzen">
+              </div>
+            </div>
+            <div style="margin-top:8px;"><button class="btn small" type="button" id="btn-meta-task-add">+ Hinzufügen</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <footer>
       <div id="f-source">Quelle: Google Search Console Performance-Export</div>
     </footer>
@@ -928,6 +968,20 @@
       var actual = q.impr? q.clicks/q.impr : 0;
       return actual < expectedCTR(q.pos)*0.5;
     }).sort(function(a,b){return b.impr-a.impr;}).slice(0,6);
+  }
+
+  /* ---- Seiten mit Title/Meta-Handlungsbedarf, aus CTR-Abweichung der Seite selbst ---- */
+  function computePageActionList(pages){
+    return pages.filter(function(p){
+      if (p.impr<20) return false;
+      var actual = p.impr? p.clicks/p.impr : 0;
+      return actual < expectedCTR(p.pos)*0.6;
+    }).map(function(p){
+      var actual = p.impr? p.clicks/p.impr : 0;
+      var exp = expectedCTR(p.pos);
+      var lost = Math.max(0, Math.round(p.impr*(exp-actual)));
+      return {url:p.url, clicks:p.clicks, impr:p.impr, pos:p.pos, actual:actual, expected:exp, lost:lost};
+    }).sort(function(a,b){ return b.lost-a.lost; }).slice(0,8);
   }
 
   function shortPath(url){
@@ -1454,12 +1508,31 @@
       return '<tr><td class="q">'+q.query+'</td><td class="num">'+dePct(actual).split(',')[0]+'&thinsp;%</td><td class="num">'+dePct(expectedCTR(q.pos)).split(',')[0]+'&thinsp;%</td><td class="num">'+dePos(q.pos)+'</td></tr>';
     }).join('') : '<tr><td colspan="4" class="empty-hint">Keine auffälligen CTR-Abweichungen gefunden.</td></tr>';
 
+    /* ---- Title/Meta/ALT: automatische Handlungsliste + manuelle Checkliste ---- */
+    var pageActions = computePageActionList(pages);
+    document.getElementById('meta-action-table-body').innerHTML = pageActions.length ? pageActions.map(function(p){
+      return '<tr><td class="q">'+shortPath(p.url)+
+        ' <button type="button" class="btn small" data-meta-take="'+shortPath(p.url).replace(/"/g,'&quot;')+'" style="padding:2px 8px; font-size:10.5px; margin-left:4px;">+ übernehmen</button></td>'+
+        '<td class="num">'+dePct(p.actual).split(',')[0]+'&thinsp;%</td><td class="num">'+dePct(p.expected).split(',')[0]+'&thinsp;%</td><td class="num">'+dePos(p.pos)+'</td><td class="num">'+deNum(p.lost)+'</td></tr>';
+    }).join('') : '<tr><td colspan="5" class="empty-hint">Keine Seite mit auffälliger CTR-Abweichung gefunden.</td></tr>';
+    Array.prototype.forEach.call(document.querySelectorAll('[data-meta-take]'), function(btn){
+      btn.addEventListener('click', function(){
+        if (activeIndex<0) return;
+        var page = btn.getAttribute('data-meta-take');
+        var r = reports[activeIndex];
+        if (!r.meta.metaTasks) r.meta.metaTasks = [];
+        r.meta.metaTasks.push({id:'mt'+Date.now(), page:page, note:'Title & Meta-Description überarbeiten', status:'offen'});
+        renderActive();
+      });
+    });
+
     /* ---- briefing keywords (rounds) & regional suggestions ---- */
     document.getElementById('f-region').value = meta.region || '';
     document.getElementById('f-services').value = (meta.services||[]).join(', ');
     renderRoundsList(queries, meta.briefingRounds || [], data.compareQueries || null);
     renderRegionalSuggestions(queries);
     renderDomainsChips();
+    renderMetaTasksList();
   }
 
   /* ============================================================
@@ -1549,6 +1622,41 @@
       });
     });
   }
+  function renderMetaTasksList(){
+    var box = document.getElementById('meta-tasks-list');
+    if (!box) return;
+    if (activeIndex<0 || !reports[activeIndex]){ box.innerHTML=''; return; }
+    var tasks = reports[activeIndex].meta.metaTasks || [];
+    if (!tasks.length){ box.innerHTML = '<p class="empty-hint">Noch keine Einträge – rechts hinzufügen oder links „+ übernehmen" klicken.</p>'; return; }
+    box.innerHTML = tasks.map(function(t){
+      var done = t.status==='erledigt';
+      return '<div style="display:flex; align-items:flex-start; gap:8px; padding:8px 0; border-bottom:1px solid var(--surface-2);">'+
+        '<input type="checkbox" data-meta-task-toggle="'+t.id+'" '+(done?'checked':'')+' style="margin-top:3px;">'+
+        '<div style="flex:1;">'+
+          '<div style="font-size:12.5px; font-weight:500;'+(done?' text-decoration:line-through; color:var(--ink-3);':'')+'">'+(t.page||'–')+'</div>'+
+          '<div style="font-size:12px; color:var(--ink-2);'+(done?' text-decoration:line-through;':'')+'">'+(t.note||'')+'</div>'+
+        '</div>'+
+        '<button type="button" class="btn small" data-meta-task-del="'+t.id+'" style="padding:3px 9px; font-size:11px;">Löschen</button>'+
+      '</div>';
+    }).join('');
+    Array.prototype.forEach.call(box.querySelectorAll('[data-meta-task-toggle]'), function(cb){
+      cb.addEventListener('change', function(){
+        if (activeIndex<0) return;
+        var id = cb.getAttribute('data-meta-task-toggle');
+        var task = (reports[activeIndex].meta.metaTasks||[]).find(function(t){ return t.id===id; });
+        if (task) task.status = cb.checked ? 'erledigt' : 'offen';
+        renderMetaTasksList();
+      });
+    });
+    Array.prototype.forEach.call(box.querySelectorAll('[data-meta-task-del]'), function(btn){
+      btn.addEventListener('click', function(){
+        if (activeIndex<0) return;
+        var id = btn.getAttribute('data-meta-task-del');
+        reports[activeIndex].meta.metaTasks = (reports[activeIndex].meta.metaTasks||[]).filter(function(t){ return t.id!==id; });
+        renderMetaTasksList();
+      });
+    });
+  }
   function renderSwatches(){
     var row = document.getElementById('swatch-row');
     row.innerHTML = ACCENT_PRESETS.map(function(c){
@@ -1604,7 +1712,7 @@
       fileName:'Beispiel',
       data:{mode:'daily', monthlyBuckets:SAMPLE_MONTHS, trendSeries:SAMPLE_TREND, queries:SAMPLE_QUERIES, devices:SAMPLE_DEVICES, countries:SAMPLE_COUNTRIES, pages:SAMPLE_PAGES, compareTotals:null},
       meta:{website:"dr-braunsteiner.de", client:"Zahnarztpraxis Dr. Braunsteiner · Essen-Rüttenscheid", author:"SELLWERK SEO-Team", footer:"SELLWERK / Websmart · SEO-Team", brandTerm:"braunsteiner",
-        customerDomains:[],
+        customerDomains:[], metaTasks:[],
         briefingRounds:[
           {id:'r1', label:'Erstbriefing', date:'2026-06-01', keywords:["Zahnarzt Essen","Implantologie","Kieferchirurgie","Parodontologie","Zahnersatz"]},
           {id:'r2', label:'Praxis-Unterseite /praxis/', date:'2026-08-15', keywords:["Zahnarzt Essen-Rüttenscheid","Zahnärzte Praxisteam Essen","Zahnärzte Rüttenscheider Straße","Zahnarzt moderne Praxisräume Essen","Zahnarzt Meisterlabor Essen"]}
@@ -1685,7 +1793,7 @@
             fileName:file.name,
             data:{mode:parsed.mode, monthlyBuckets:agg.monthlyBuckets, trendSeries:agg.trendSeries, queries:parsed.queries, devices:parsed.devices, countries:parsed.countries, pages:parsed.pages, compareTotals:null},
             meta:{website: website0, client:"", author:"SELLWERK SEO-Team", footer:"", brandTerm:null,
-              briefingRounds:[], region:guess0.region, services:guess0.services, customerDomains:[],
+              briefingRounds:[], region:guess0.region, services:guess0.services, customerDomains:[], metaTasks:[],
               periodStart:periodStart, periodEnd:periodEnd, exportDate: fmtDateDE(new Date())}
           });
         }catch(err){ reject(err); }
@@ -1853,7 +1961,7 @@
         fileName: 'GSC: ' + website1,
         data:{mode:'daily', monthlyBuckets:agg.monthlyBuckets, trendSeries:agg.trendSeries, queries:queries, devices:devices, countries:countries, pages:pages, compareTotals:null},
         meta:{website: website1, client:'', author:"SELLWERK SEO-Team", footer:"", brandTerm:null,
-          briefingRounds:[], region:guess1.region, services:guess1.services, customerDomains:[],
+          briefingRounds:[], region:guess1.region, services:guess1.services, customerDomains:[], metaTasks:[],
           periodStart:dailyRows[0].date, periodEnd:dailyRows[dailyRows.length-1].date, exportDate: fmtDateDE(new Date())}
       };
     });
@@ -1946,6 +2054,24 @@
     if (e.key==='Enter'){ e.preventDefault(); document.getElementById('btn-domain-add').click(); }
   });
 
+  /* ---- Title/Meta/ALT: manuelle Checkliste ---- */
+  document.getElementById('btn-meta-task-add').addEventListener('click', function(){
+    if (activeIndex<0) return;
+    var pageInput = document.getElementById('f-meta-task-page');
+    var noteInput = document.getElementById('f-meta-task-note');
+    var page = pageInput.value.trim();
+    var note = noteInput.value.trim();
+    if (!page && !note) return;
+    var r = reports[activeIndex];
+    if (!r.meta.metaTasks) r.meta.metaTasks = [];
+    r.meta.metaTasks.push({id:'mt'+Date.now(), page:page, note:note, status:'offen'});
+    pageInput.value = ''; noteInput.value = '';
+    renderMetaTasksList();
+  });
+  document.getElementById('f-meta-task-note').addEventListener('keydown', function(e){
+    if (e.key==='Enter'){ e.preventDefault(); document.getElementById('btn-meta-task-add').click(); }
+  });
+
   /* ---- branding ---- */
   document.getElementById('btn-logo').addEventListener('click', function(){ document.getElementById('logo-input').click(); });
   document.getElementById('logo-input').addEventListener('change', function(e){
@@ -1965,7 +2091,7 @@
     var profiles = loadProfiles();
     var domains = r.meta.customerDomains || [];
     if (r.meta.website && domains.indexOf(r.meta.website)===-1) domains = domains.concat([r.meta.website]);
-    profiles[name] = {website:r.meta.website, client:r.meta.client, author:r.meta.author, footer:r.meta.footer, brandTerm:r.meta.brandTerm, briefingRounds:r.meta.briefingRounds, region:r.meta.region, services:r.meta.services, domains:domains, accentColor:currentAccent, logoDataUrl:currentLogo};
+    profiles[name] = {website:r.meta.website, client:r.meta.client, author:r.meta.author, footer:r.meta.footer, brandTerm:r.meta.brandTerm, briefingRounds:r.meta.briefingRounds, region:r.meta.region, services:r.meta.services, domains:domains, metaTasks:r.meta.metaTasks||[], accentColor:currentAccent, logoDataUrl:currentLogo};
     saveProfilesObj(profiles);
     refreshProfileSelect(name);
   });
@@ -1977,7 +2103,7 @@
     var r = reports[activeIndex];
     r.meta.website=p.website; r.meta.client=p.client; r.meta.author=p.author; r.meta.footer=p.footer; r.meta.brandTerm=p.brandTerm;
     r.meta.briefingRounds = p.briefingRounds || (p.briefingKeywords && p.briefingKeywords.length ? [{id:'r'+Date.now(), label:'Übernommen', date:new Date().toISOString().slice(0,10), keywords:p.briefingKeywords}] : []);
-    r.meta.region=p.region||''; r.meta.services=p.services||[]; r.meta.customerDomains=p.domains||[];
+    r.meta.region=p.region||''; r.meta.services=p.services||[]; r.meta.customerDomains=p.domains||[]; r.meta.metaTasks=p.metaTasks||[];
     if (p.accentColor) applyAccent(p.accentColor);
     applyLogo(p.logoDataUrl||null);
     renderActive();
