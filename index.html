@@ -592,7 +592,7 @@
             <div class="field-row">
               <div>
                 <div class="field-label">Bezeichnung der Runde</div>
-                <input type="text" class="field-input" id="f-round-label" placeholder="z. B. Q3 2026">
+                <input type="text" class="field-input" id="f-round-label" placeholder="z. B. Gespräch vom 15.09.2026">
               </div>
               <div>
                 <div class="field-label">Datum</div>
@@ -650,7 +650,6 @@
     </div>
 
     <footer>
-      <div contenteditable="true" id="f-footer" data-placeholder="Team-/Agentur-Kennzeichnung eintragen (optional)"></div>
       <div id="f-source">Quelle: Google Search Console Performance-Export</div>
     </footer>
 
@@ -1202,7 +1201,6 @@
     document.getElementById('f-client').textContent = meta.client || '';
     document.getElementById('f-author').textContent = meta.author;
     document.getElementById('welcome-name').textContent = meta.author ? (', '+meta.author) : '';
-    document.getElementById('f-footer').textContent = meta.footer;
     document.getElementById('f-brand').textContent = meta.brandTerm || guessBrandTerm(meta.website);
     document.getElementById('f-source').textContent = 'Quelle: Google Search Console Performance-Export' + (meta.exportDate ? (', '+meta.exportDate) : '');
     var todayStr = fmtDateDE(new Date());
@@ -1555,7 +1553,7 @@
     reports = [{
       fileName:'Beispiel',
       data:{mode:'daily', monthlyBuckets:SAMPLE_MONTHS, trendSeries:SAMPLE_TREND, queries:SAMPLE_QUERIES, devices:SAMPLE_DEVICES, countries:SAMPLE_COUNTRIES, pages:SAMPLE_PAGES, compareTotals:null},
-      meta:{website:"dr-braunsteiner.de", client:"Zahnarztpraxis Dr. Braunsteiner · Essen-Rüttenscheid", author:"SELLWERK SEO-Team", footer:"Ihr SEO-Team", brandTerm:"braunsteiner",
+      meta:{website:"dr-braunsteiner.de", client:"Zahnarztpraxis Dr. Braunsteiner · Essen-Rüttenscheid", author:"SELLWERK SEO-Team", footer:"SELLWERK / Websmart · SEO-Team", brandTerm:"braunsteiner",
         customerDomains:[],
         briefingRounds:[
           {id:'r1', label:'Erstbriefing', date:'2026-06-01', keywords:["Zahnarzt Essen","Implantologie","Kieferchirurgie","Parodontologie","Zahnersatz"]},
@@ -1579,7 +1577,6 @@
     r.meta.website = document.getElementById('f-website').textContent.trim();
     r.meta.client = document.getElementById('f-client').textContent.trim();
     r.meta.author = document.getElementById('f-author').textContent.trim();
-    r.meta.footer = document.getElementById('f-footer').textContent.trim();
     r.meta.brandTerm = document.getElementById('f-brand').textContent.trim();
     r.meta.region = document.getElementById('f-region').value.trim();
     r.meta.services = (document.getElementById('f-services').value||'').split(',').map(function(s){return s.trim();}).filter(Boolean);
