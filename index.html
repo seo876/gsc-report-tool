@@ -5,6 +5,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,500;0,700;0,900;1,400&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
+<style id="print-page-margin-style"></style>
 <style>
   :root{
     color-scheme: light;
@@ -309,12 +310,20 @@
 
   [hidden]{display:none!important;}
 
+  .print-logo-header{display:none;}
+
   @media print{
     body{background:#fff;}
     .sidenav,.welcome-bar-actions,.banner,.tabbar,.compare-row,#btn-add-compare,#view-setup,#round-add-form,#btn-suggest-update,#f-domain-add,#btn-domain-add,#f-meta-task-page,#f-meta-task-note,#btn-meta-task-add,[data-meta-take],[data-meta-task-del]{display:none!important;}
     .app-shell{display:block;}
     .main-col{width:100%;}
     .welcome-bar{position:static; background:#fff!important; color:var(--ink-1)!important; padding:0 0 8px; border-bottom:1px solid var(--border);}
+    body.has-logo .print-logo-header{
+      display:flex; position:fixed; top:0; left:0; right:0; justify-content:center; align-items:center;
+      padding:8px 0 7px; background:#fff; border-bottom:2px solid var(--blue);
+    }
+    body.has-logo .print-logo-header img{max-height:32px; max-width:220px; object-fit:contain;}
+    body.has-logo .hero-logo{display:none!important;}
     [contenteditable]{border-bottom:none!important;}
     .wrap{max-width:100%; padding:0 6px 20px;}
     .hero,.kpi,.chart-card,.card,.summary-card,.next-steps{box-shadow:none; break-inside:avoid; page-break-inside:avoid;}
@@ -329,6 +338,8 @@
     [data-round-del]{display:none!important;}
   }
 </style>
+
+<div class="print-logo-header" id="print-logo-header"><img id="print-logo-header-img" alt=""></div>
 
 <div class="app-shell">
 
@@ -1676,8 +1687,18 @@
     currentLogo = dataUrl || null;
     var heroLogo = document.getElementById('hero-logo');
     var preview = document.getElementById('logo-preview');
-    if (currentLogo){ heroLogo.src=currentLogo; heroLogo.hidden=false; preview.src=currentLogo; preview.hidden=false; }
-    else { heroLogo.hidden=true; preview.hidden=true; }
+    var printImg = document.getElementById('print-logo-header-img');
+    var pageStyle = document.getElementById('print-page-margin-style');
+    if (currentLogo){
+      heroLogo.src=currentLogo; heroLogo.hidden=false; preview.src=currentLogo; preview.hidden=false;
+      if (printImg) printImg.src = currentLogo;
+      document.body.classList.add('has-logo');
+      if (pageStyle) pageStyle.textContent = '@page{ margin-top:28mm; }';
+    } else {
+      heroLogo.hidden=true; preview.hidden=true;
+      document.body.classList.remove('has-logo');
+      if (pageStyle) pageStyle.textContent = '';
+    }
   }
 
   /* ============================================================
