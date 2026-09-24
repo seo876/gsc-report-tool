@@ -314,10 +314,9 @@
 
   @media print{
     body{background:#fff;}
-    .sidenav,.welcome-bar-actions,.banner,.tabbar,.compare-row,#btn-add-compare,#view-setup,#round-add-form,#btn-suggest-update,#f-domain-add,#btn-domain-add,#f-meta-task-page,#f-meta-task-note,#btn-meta-task-add,[data-meta-take],[data-meta-task-del]{display:none!important;}
+    .sidenav,.welcome-bar,.banner,.tabbar,.compare-row,#btn-add-compare,#view-setup,#round-add-form,#btn-suggest-update,#f-domain-add,#btn-domain-add,#f-meta-task-page,#f-meta-task-note,#btn-meta-task-add,#trend-granularity-toggle,[data-meta-take],[data-meta-task-del]{display:none!important;}
     .app-shell{display:block;}
     .main-col{width:100%;}
-    .welcome-bar{position:static; background:#fff!important; color:var(--ink-1)!important; padding:0 0 8px; border-bottom:1px solid var(--border);}
     body.has-logo .print-logo-header{
       display:flex; position:fixed; top:0; left:0; right:0; justify-content:center; align-items:center;
       padding:4px 0 3px; background:#fff; border-bottom:1.5px solid var(--blue); z-index:50;
@@ -530,10 +529,16 @@
 
     <div class="section">
       <div class="section-head">
-        <h2 id="trend-title">Entwicklung pro Woche</h2>
-        <p id="trend-note"></p>
+        <div>
+          <h2 id="trend-title">Entwicklung pro Woche</h2>
+          <p id="trend-note"></p>
+        </div>
+        <div id="trend-granularity-toggle" hidden style="display:flex; gap:6px;">
+          <button type="button" class="btn small" id="btn-trend-week">Woche</button>
+          <button type="button" class="btn small" id="btn-trend-month">Monat</button>
+        </div>
       </div>
-      <p class="table-note" style="margin-top:-6px;">Zeigt, wie sich Klicks, Impressionen und die durchschnittliche Position in Google über den Zeitraum entwickelt haben – gestrichelte Linien markieren unvollständige Wochen am Rand des Exports.</p>
+      <p class="table-note" id="trend-hint" style="margin-top:-6px;">Zeigt, wie sich Klicks, Impressionen und die durchschnittliche Position in Google über den Zeitraum entwickelt haben – gestrichelte Linien markieren unvollständige Wochen am Rand des Exports.</p>
       <div class="chart-grid" id="chart-grid"></div>
     </div>
 
@@ -1451,18 +1456,43 @@
     }
 
     /* ---- charts ---- */
-    document.getElementById('trend-title').textContent = data.mode==='daily' ? 'Entwicklung pro Woche' : 'Entwicklung pro Monat';
-    document.getElementById('trend-note').textContent = trendSeries.length + (data.mode==='daily' ? ' Wochen' : ' Zeiträume') + ' · erste/letzte Periode ggf. unvollständig im Export (gestrichelt)';
+    // Im 'daily'-Modus liegen sowohl wöchentliche (trendSeries) als auch monatliche (monthlyBuckets)
+    // Aggregate vor – hier kann der Nutzer zwischen beiden Ansichten umschalten. Im 'monthly'-Modus
+    // (Export war bereits monatsweise) gibt es nur eine Granularität, dann bleibt es fest bei Monat.
+    var monthlyAsTrend = monthlyBuckets.map(function(b){
+      return {label:b.label, clicks:b.clicks, impr:b.impr, pos:b.pos, partial:!b.isFull};
+    });
+    var canToggleGranularity = data.mode==='daily' && monthlyAsTrend.length >= 2;
+    var granularity = canToggleGranularity ? (data.trendGranularity || 'week') : (data.mode==='daily' ? 'week' : 'month');
+    var activeTrendSeries = granularity==='month' ? monthlyAsTrend : trendSeries;
+    var unitLabel = granularity==='month' ? ' Monate' : ' Wochen';
+
+    var toggleEl = document.getElementById('trend-granularity-toggle');
+    var btnWeek = document.getElementById('btn-trend-week');
+    var btnMonth = document.getElementById('btn-trend-month');
+    if (canToggleGranularity){
+      toggleEl.hidden = false;
+      btnWeek.className = 'btn small' + (granularity==='week' ? ' primary' : '');
+      btnMonth.className = 'btn small' + (granularity==='month' ? ' primary' : '');
+      btnWeek.onclick = function(){ data.trendGranularity='week'; render(data, meta); };
+      btnMonth.onclick = function(){ data.trendGranularity='month'; render(data, meta); };
+    } else {
+      toggleEl.hidden = true;
+    }
+
+    document.getElementById('trend-title').textContent = granularity==='month' ? 'Entwicklung pro Monat' : 'Entwicklung pro Woche';
+    document.getElementById('trend-note').textContent = activeTrendSeries.length + (data.mode==='daily' ? unitLabel : ' Zeiträume') + ' · erste/letzte Periode ggf. unvollständig im Export (gestrichelt)';
+    document.getElementById('trend-hint').textContent = 'Zeigt, wie sich Klicks, Impressionen und die durchschnittliche Position in Google über den Zeitraum entwickelt haben – gestrichelte Linien markieren unvollständige ' + (granularity==='month' ? 'Monate' : 'Wochen') + ' am Rand des Exports.';
     var grid = document.getElementById('chart-grid');
-    if (trendSeries.length >= 2){
+    if (activeTrendSeries.length >= 2){
       var configs = [
         {key:"clicks", title:"Klicks", color:"var(--blue)", fmt:deNum, invert:false},
         {key:"impr",   title:"Impressionen", color:"var(--orange)", fmt:deNum, invert:false},
         {key:"pos",    title:"Ø Position", color:"var(--good)", fmt:dePos, invert:true}
       ];
-      var built = configs.map(function(c){ return buildChartHTML(c, trendSeries); });
+      var built = configs.map(function(c){ return buildChartHTML(c, activeTrendSeries); });
       grid.innerHTML = built.map(function(b){return b.html;}).join("");
-      built.forEach(function(b,i){ wireChart(b, configs[i], trendSeries); });
+      built.forEach(function(b,i){ wireChart(b, configs[i], activeTrendSeries); });
     } else {
       grid.innerHTML = '<div class="card"><p class="empty-hint">Zu wenige Datenpunkte für einen Verlauf – lade einen Export mit einem längeren Zeitraum.</p></div>';
     }
