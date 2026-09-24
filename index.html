@@ -327,8 +327,7 @@
     [contenteditable]{border-bottom:none!important;}
     .wrap{max-width:100%; padding:0 6px 20px;}
     .hero,.kpi,.chart-card,.card,.summary-card,.next-steps{box-shadow:none; break-inside:avoid; page-break-inside:avoid;}
-    .section{break-inside:avoid; page-break-inside:avoid;}
-    .section-head{display:block; break-inside:avoid; page-break-inside:avoid;}
+    .section-head{display:block; break-inside:avoid; page-break-inside:avoid; break-after:avoid-page;}
     .section-head p,.table-note{orphans:4; widows:4;}
     .dash-row{grid-template-columns:2.2fr 1fr; break-inside:avoid; page-break-inside:avoid;}
     .kpi-grid{grid-template-columns:repeat(3,1fr); break-inside:avoid; page-break-inside:avoid;}
@@ -608,11 +607,11 @@
     <div class="section" id="sec-keywords">
       <div class="section-head">
         <h2>Vereinbarte Keywords &amp; Empfehlungen</h2>
-        <p>Abgleich mit dem Kunden-Briefing · Ideen für neue Inhalte</p>
+        <p>Abgleich mit den vereinbarten Keywords · Ideen für neue Inhalte</p>
       </div>
       <div class="table-grid">
         <div class="card">
-          <h3>Briefing-Keywords im Vergleich</h3>
+          <h3>Vereinbarte Keywords im Vergleich</h3>
           <p class="table-note">Mit dem Kunden abgesprochene Keywords, eingetragen in datierten Runden (z. B. pro Quartal). Ältere Runden bleiben erhalten, wenn neue dazukommen. Der Abgleich mit den Suchanfragen läuft automatisch, und die Einordnung berücksichtigt, wie lange ein Keyword schon eingetragen ist.</p>
           <div id="rounds-list"></div>
           <div id="round-add-form" style="border-top:1px solid var(--border); margin-top:6px; padding-top:14px;">
@@ -1432,7 +1431,7 @@
         if (e.tag==='low') lowRoundKw = kw;
       });
     });
-    if (lowRoundKw) nextSteps.push('Briefing-Keyword <b>„'+lowRoundKw+'"</b> läuft noch schwach – im nächsten Abstimmungstermin ansprechen.');
+    if (lowRoundKw) nextSteps.push('Vereinbartes Keyword <b>„'+lowRoundKw+'"</b> läuft noch schwach – im nächsten Abstimmungstermin ansprechen.');
     if (overallCtr && overallCtr < 0.02) nextSteps.push('Die durchschnittliche CTR ist niedrig – Snippets/Title für die wichtigsten Seiten überarbeiten.');
     if (!nextSteps.length) nextSteps.push('Aktuell keine auffälligen Handlungsfelder – laufende Maßnahmen fortsetzen und regelmäßig prüfen.');
     document.getElementById('next-steps-list').innerHTML = nextSteps.slice(0,4).map(function(s){ return '<li>'+s+'</li>'; }).join('');
