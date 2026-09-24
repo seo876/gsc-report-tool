@@ -313,7 +313,7 @@
 
   @media print{
     body{background:#fff;}
-    .sidenav,.welcome-bar,.banner,.tabbar,.compare-row,#btn-add-compare,#view-setup,#round-add-form,#btn-suggest-update,#f-domain-add,#btn-domain-add,#f-meta-task-page,#f-meta-task-note,#btn-meta-task-add,#trend-granularity-toggle,[data-meta-take],[data-meta-task-del]{display:none!important;}
+    .sidenav,.welcome-bar,.banner,.tabbar,.compare-row,#btn-add-compare,#view-setup,#round-add-form,#btn-suggest-update,#f-domain-add,#btn-domain-add,#f-meta-task-page,#f-meta-task-note,#btn-meta-task-add,[data-meta-take],[data-meta-task-del]{display:none!important;}
     .app-shell{display:block;}
     .main-col{width:100%;}
     body.has-logo .print-logo-header{
@@ -529,15 +529,11 @@
     <div class="section">
       <div class="section-head">
         <div>
-          <h2 id="trend-title">Entwicklung pro Woche</h2>
+          <h2 id="trend-title">Entwicklung pro Monat</h2>
           <p id="trend-note"></p>
         </div>
-        <div id="trend-granularity-toggle" hidden style="display:flex; gap:6px;">
-          <button type="button" class="btn small" id="btn-trend-week">Woche</button>
-          <button type="button" class="btn small" id="btn-trend-month">Monat</button>
-        </div>
       </div>
-      <p class="table-note" id="trend-hint" style="margin-top:-6px;">Zeigt, wie sich Klicks, Impressionen und die durchschnittliche Position in Google über den Zeitraum entwickelt haben. Die erste/letzte Woche am Rand des Exports kann unvollständig sein – die Kennzahl oben zeigt dann den letzten vollständigen Zeitraum.</p>
+      <p class="table-note" id="trend-hint" style="margin-top:-6px;">Zeigt, wie sich Klicks, Impressionen und die durchschnittliche Position in Google (Durchschnitt über alle Keywords) von Monat zu Monat entwickelt haben. Die große Zahl über jedem Chart bezieht sich jeweils nur auf den zuletzt abgeschlossenen Monat, nicht auf den gesamten dargestellten Zeitraum – der erste/letzte Monat am Rand des Exports kann unvollständig sein und wird dafür übersprungen.</p>
       <div class="chart-grid" id="chart-grid"></div>
     </div>
 
@@ -1198,6 +1194,14 @@
   ============================================================ */
   var W = 640, H = 168, PAD = {top:14,right:8,bottom:22,left:8};
 
+  function monthFullLabel(key){
+    if (!key) return '';
+    var parts = String(key).split('-');
+    var mIdx = parseInt(parts[1], 10) - 1;
+    if (!MONTHS[mIdx]) return '';
+    return MONTHS[mIdx] + ' ' + parts[0];
+  }
+
   function buildChartHTML(cfg, series){
     var vals = series.map(function(d){ return d[cfg.key]; });
     var min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
@@ -1219,10 +1223,12 @@
     var dots = pts.map(function(p,i){ return '<circle class="hover-dot" data-i="'+i+'" cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="4" stroke="'+cfg.color+'"></circle>'; }).join('');
     var lastPt = pts[pts.length-1];
 
-    // Für die große Kennzahl oben im Chart lieber den letzten VOLLSTÄNDIGEN Zeitraum
-    // anzeigen statt den ggf. unvollständigen letzten Zeitraum – sonst wirkt z. B. eine
-    // laufende Woche mit erst 2 Klicks wie das Ergebnis des gesamten Zeitraums (v. a. im
-    // PDF-Export ohne Hover-Tooltip zur Erklärung).
+    // Für die große Kennzahl oben im Chart lieber den letzten VOLLSTÄNDIGEN Monat anzeigen
+    // statt den ggf. unvollständigen letzten Monat – sonst wirkt z. B. ein laufender Monat
+    // mit erst wenigen Klicks wie das Ergebnis des gesamten dargestellten Zeitraums.
+    // Die Kennzahl bezieht sich außerdem IMMER klar auf genau diesen einen Monat (per
+    // Beschriftung "im <Monat Jahr>"), nie auf den gesamten Chart-Zeitraum – das war zuvor
+    // missverständlich, v. a. im PDF ohne Hover-Tooltip.
     var statIdx = series.length - 1;
     if (series[statIdx].partial && series.length > 1){
       for (var si = series.length - 2; si >= 0; si--){
@@ -1230,7 +1236,8 @@
       }
     }
     var lastVal = cfg.fmt(series[statIdx][cfg.key]);
-    var statLabel = (statIdx === series.length - 1) ? 'letzter Zeitpunkt' : 'letzter vollständiger Zeitraum';
+    var statMonthLabel = monthFullLabel(series[statIdx].key) || series[statIdx].label;
+    var statLabel = 'im ' + statMonthLabel;
 
     // Linie wird durchgehend als eine einzige, durchgezogene Linie gezeichnet (keine
     // gestrichelten Teilstücke an den Rändern mehr).
@@ -1455,39 +1462,19 @@
     }
 
     /* ---- charts ---- */
-    // Im 'daily'-Modus liegen sowohl wöchentliche (trendSeries) als auch monatliche (monthlyBuckets)
-    // Aggregate vor – hier kann der Nutzer zwischen beiden Ansichten umschalten. Im 'monthly'-Modus
-    // (Export war bereits monatsweise) gibt es nur eine Granularität, dann bleibt es fest bei Monat.
-    var monthlyAsTrend = monthlyBuckets.map(function(b){
-      return {label:b.label, clicks:b.clicks, impr:b.impr, pos:b.pos, partial:!b.isFull};
+    // Verlauf immer pro Monat (Wochenansicht entfernt, da sie auf einen Blick leicht mit dem
+    // gesamten Berichtszeitraum verwechselt werden konnte).
+    var activeTrendSeries = monthlyBuckets.map(function(b){
+      return {label:b.label, key:b.key, clicks:b.clicks, impr:b.impr, pos:b.pos, partial:!b.isFull};
     });
-    var canToggleGranularity = data.mode==='daily' && monthlyAsTrend.length >= 2;
-    var granularity = canToggleGranularity ? (data.trendGranularity || 'week') : (data.mode==='daily' ? 'week' : 'month');
-    var activeTrendSeries = granularity==='month' ? monthlyAsTrend : trendSeries;
-    var unitLabel = granularity==='month' ? ' Monate' : ' Wochen';
 
-    var toggleEl = document.getElementById('trend-granularity-toggle');
-    var btnWeek = document.getElementById('btn-trend-week');
-    var btnMonth = document.getElementById('btn-trend-month');
-    if (canToggleGranularity){
-      toggleEl.hidden = false;
-      btnWeek.className = 'btn small' + (granularity==='week' ? ' primary' : '');
-      btnMonth.className = 'btn small' + (granularity==='month' ? ' primary' : '');
-      btnWeek.onclick = function(){ data.trendGranularity='week'; render(data, meta); };
-      btnMonth.onclick = function(){ data.trendGranularity='month'; render(data, meta); };
-    } else {
-      toggleEl.hidden = true;
-    }
-
-    document.getElementById('trend-title').textContent = granularity==='month' ? 'Entwicklung pro Monat' : 'Entwicklung pro Woche';
-    document.getElementById('trend-note').textContent = activeTrendSeries.length + (data.mode==='daily' ? unitLabel : ' Zeiträume') + ' · erste/letzte Periode ggf. unvollständig im Export';
-    document.getElementById('trend-hint').textContent = 'Zeigt, wie sich Klicks, Impressionen und die durchschnittliche Position in Google über den Zeitraum entwickelt haben. Die erste/letzte ' + (granularity==='month' ? 'Periode' : 'Woche') + ' am Rand des Exports kann unvollständig sein – die Kennzahl oben zeigt dann den letzten vollständigen Zeitraum.';
+    document.getElementById('trend-note').textContent = activeTrendSeries.length + ' Monate · erster/letzter Monat ggf. unvollständig im Export';
     var grid = document.getElementById('chart-grid');
     if (activeTrendSeries.length >= 2){
       var configs = [
-        {key:"clicks", title:"Klicks", color:"var(--blue)", fmt:deNum, invert:false},
-        {key:"impr",   title:"Impressionen", color:"var(--orange)", fmt:deNum, invert:false},
-        {key:"pos",    title:"Ø Position", color:"var(--good)", fmt:dePos, invert:true}
+        {key:"clicks", title:"Klicks pro Monat", color:"var(--blue)", fmt:deNum, invert:false},
+        {key:"impr",   title:"Impressionen pro Monat", color:"var(--orange)", fmt:deNum, invert:false},
+        {key:"pos",    title:"Ø Position pro Monat (alle Keywords)", color:"var(--good)", fmt:dePos, invert:true}
       ];
       var built = configs.map(function(c){ return buildChartHTML(c, activeTrendSeries); });
       grid.innerHTML = built.map(function(b){return b.html;}).join("");
