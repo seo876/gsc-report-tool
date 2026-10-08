@@ -302,10 +302,14 @@
   .kw-chip small{font-family:"Roboto Mono",monospace; opacity:.8;}
   .kw-chip small[data-domain-del]{opacity:1; padding-left:2px;}
 
-  .opt-event-row{display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:12.5px; padding:8px 0; border-bottom:1px dashed var(--border);}
+  .opt-event-row{display:flex; align-items:flex-start; justify-content:space-between; gap:10px; font-size:12.5px; padding:8px 0; border-bottom:1px dashed var(--border);}
   .opt-event-row:last-child{border-bottom:none;}
-  .opt-event-row .oe-date{font-family:"Roboto Mono",monospace; color:var(--ink-1); font-weight:500; flex:none;}
-  .opt-event-row .oe-label{color:var(--ink-2); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .opt-event-row .oe-date{font-family:"Roboto Mono",monospace; color:var(--ink-1); font-weight:500; flex:none; padding-top:1px;}
+  .opt-event-row .oe-label{color:var(--ink-2); flex:1; min-width:0; display:flex; flex-direction:column; gap:3px;}
+  .opt-event-row .oe-status{font-size:11px; line-height:1.4;}
+  .opt-event-row .oe-status-pending{color:var(--ink-3);}
+  .opt-event-row .oe-status-found{color:var(--warn,#c98a1a); font-weight:500;}
+  .opt-event-row .oe-status-none{color:var(--good);}
   .combo-marker-line{stroke:var(--ink-3); stroke-width:1.3; stroke-dasharray:4 3; opacity:.75;}
   .combo-marker-label{fill:var(--ink-2); font-size:8.5px; font-family:"Roboto",sans-serif;}
 
@@ -346,7 +350,7 @@
 
   [hidden]{display:none!important;}
 
-  .print-wrap-table,.print-wrap-table thead,.print-wrap-table tbody,.print-wrap-table tr,.print-wrap-table td{display:block; margin:0; padding:0; border:0; width:auto;}
+  .print-wrap-table,.print-wrap-table>thead,.print-wrap-table>tbody,.print-wrap-table>thead>tr,.print-wrap-table>tbody>tr,.print-wrap-table>thead>tr>td,.print-wrap-table>tbody>tr>td{display:block; margin:0; padding:0; border:0; width:auto;}
   .print-logo-header{display:none;}
 
   @media print{
@@ -364,8 +368,8 @@
     .print-wrap-table{display:table; width:100%;}
     .print-wrap-table>thead{display:table-header-group;}
     .print-wrap-table>tbody{display:table-row-group;}
-    .print-wrap-table tr{display:table-row;}
-    .print-wrap-table td{display:table-cell; padding:0; margin:0; border:0;}
+    .print-wrap-table>thead>tr,.print-wrap-table>tbody>tr{display:table-row;}
+    .print-wrap-table>thead>tr>td,.print-wrap-table>tbody>tr>td{display:table-cell; padding:0; margin:0; border:0;}
     .hero-logo{display:none!important;}
     [contenteditable]{border-bottom:none!important;}
     .wrap{max-width:100%; padding:0 6px 20px;}
@@ -1111,16 +1115,37 @@
   }
 
   /* ---- Optimierungen & Live-Gänge: Termine je Kundenprofil, als Markierung im Monats-Diagramm ---- */
-  function renderOptEventsList(events){
+  function renderOptEventsList(events, monthlyBuckets){
     var box = document.getElementById('opt-events-list');
     if (!box) return;
     if (!events || !events.length){ box.innerHTML = '<p class="empty-hint">Noch kein Termin hinterlegt.</p>'; return; }
+    /* Status pro Termin: zeigt, ob/warum der Rückgangs-Hinweis im Fließtext (noch) nicht erscheint –
+       macht die automatische Auswertung nachvollziehbar, ohne dass ein manueller "Neu auswerten"-Button nötig ist. */
+    function evalStatus(ev){
+      if (!ev.date || !monthlyBuckets) return null;
+      var dp = (ev.date||'').split('-');
+      if (dp.length!==3) return null;
+      var y = parseInt(dp[0],10), m0 = parseInt(dp[1],10)-1;
+      var key = monthKey(y, m0);
+      var idx = -1;
+      for (var j=0;j<monthlyBuckets.length;j++){ if (monthlyBuckets[j].key===key){ idx=j; break; } }
+      if (idx<0) return {cls:'pending', text:'Termin liegt außerhalb des aktuellen Auswertungszeitraums'};
+      if (idx+1>=monthlyBuckets.length) return {cls:'pending', text:'Wartet auf Daten für den Monat danach'};
+      var before = monthlyBuckets[idx], after = monthlyBuckets[idx+1];
+      if (!after.isFull) return {cls:'pending', text:after.label+' läuft noch – Auswertung folgt, sobald der Monat abgeschlossen ist'};
+      var posWorse = after.pos - before.pos;
+      var clicksDropPct = before.clicks ? (before.clicks-after.clicks)/before.clicks : 0;
+      if (posWorse > 0.3 || clicksDropPct > 0.05) return {cls:'found', text:'Rückgang erkannt – Erklärung steht im Text oben'};
+      return {cls:'none', text:'Kein Rückgang erkannt – kein Hinweis nötig'};
+    }
     box.innerHTML = events.slice().sort(function(a,b){ return (a.date||'')<(b.date||'') ? 1 : -1; }).map(function(ev){
       var dp = (ev.date||'').split('-'); // ISO-String direkt zerlegen – kein Date()/Zeitzonen-Offset
       var dLabel = dp.length===3 ? (dp[2]+'.'+dp[1]+'.'+dp[0]) : '–';
+      var st = evalStatus(ev);
+      var statusHtml = st ? ('<span class="oe-status oe-status-'+st.cls+'">'+st.text+'</span>') : '';
       return '<div class="opt-event-row">'+
         '<span class="oe-date">'+dLabel+'</span>'+
-        '<span class="oe-label">'+(ev.label||'Optimierung')+'</span>'+
+        '<span class="oe-label">'+(ev.label||'Optimierung')+statusHtml+'</span>'+
         '<button type="button" class="btn small" data-opt-event-del="'+ev.id+'" style="padding:3px 9px; font-size:11px;">Löschen</button>'+
       '</div>';
     }).join('');
@@ -1771,7 +1796,7 @@
     document.getElementById('f-region').value = meta.region || '';
     document.getElementById('f-services').value = (meta.services||[]).join(', ');
     renderRoundsList(queries, meta.briefingRounds || [], data.compareQueries || null);
-    renderOptEventsList(meta.optimizationEvents || []);
+    renderOptEventsList(meta.optimizationEvents || [], monthlyBuckets);
     renderRegionalSuggestions(queries);
     renderDomainsChips();
   }
