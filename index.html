@@ -17,8 +17,8 @@
     --ink-2:          #5f6368;
     --ink-3:          #80868b;
 
-    --blue:           #2a78d6;
-    --blue-soft:      #e8f0fd;
+    --blue:           #00af9c;
+    --blue-soft:      #e0f5f3;
     --orange:         #eb6834;
     --orange-soft:    #fdeee7;
 
@@ -44,7 +44,7 @@
       color-scheme: dark;
       --bg:#131314; --surface:#1e1f20; --surface-2:#262729; --border:#3c4043;
       --ink-1:#e8eaed; --ink-2:#c3c2b7; --ink-3:#9aa0a6;
-      --blue:#7cabf2; --blue-soft:#22314a; --orange:#f0925f; --orange-soft:#3a2a20;
+      --blue:#35cdbb; --blue-soft:#123330; --orange:#f0925f; --orange-soft:#3a2a20;
       --good:#57c257; --good-soft:#16341a; --warn:#f5c065; --warn-soft:#3a2f16; --warn-dot:#f5c065;
       --critical:#f28b82; --critical-soft:#3a2020;
       --shadow-1: 0 1px 2px 0 rgba(0,0,0,.4), 0 1px 3px 1px rgba(0,0,0,.3);
@@ -55,7 +55,7 @@
     color-scheme: dark;
     --bg:#131314; --surface:#1e1f20; --surface-2:#262729; --border:#3c4043;
     --ink-1:#e8eaed; --ink-2:#c3c2b7; --ink-3:#9aa0a6;
-    --blue:#7cabf2; --blue-soft:#22314a; --orange:#f0925f; --orange-soft:#3a2a20;
+    --blue:#35cdbb; --blue-soft:#123330; --orange:#f0925f; --orange-soft:#3a2a20;
     --good:#57c257; --good-soft:#16341a; --warn:#f5c065; --warn-soft:#3a2f16; --warn-dot:#f5c065;
     --critical:#f28b82; --critical-soft:#3a2020;
     --shadow-1: 0 1px 2px 0 rgba(0,0,0,.4), 0 1px 3px 1px rgba(0,0,0,.3);
@@ -294,7 +294,7 @@
   .swatch.active{border-color:var(--ink-1);}
   .logo-thumb{height:22px; max-width:90px; object-fit:contain; border-radius:4px;}
   .subbar-sep{width:1px; height:18px; background:var(--border); flex:none;}
-  .hero-logo{height:34px; max-width:160px; object-fit:contain; margin-bottom:14px;}
+  .hero-logo{height:34px; width:auto; max-width:160px; object-fit:contain; margin-bottom:14px; display:block;}
 
   /* ---------- client tabs (batch) ---------- */
   .tabbar{display:flex; gap:6px; flex-wrap:wrap; margin-top:22px;}
@@ -319,17 +319,18 @@
   .print-logo-header{display:none;}
 
   @media print{
+    @page{ margin-top:15mm; }
     body{background:#fff;}
-    .sidenav,.welcome-bar-actions,.banner,.tabbar,.compare-row,#btn-add-compare,#view-setup,#round-add-form,#btn-suggest-update,#f-domain-add,#btn-domain-add,#f-meta-task-page,#f-meta-task-note,#btn-meta-task-add,[data-meta-take],[data-meta-task-del]{display:none!important;}
+    .sidenav,.welcome-bar-actions,.banner,.tabbar,.compare-row,#btn-add-compare,#view-setup,#round-add-form,#btn-suggest-update,#f-domain-add,#btn-domain-add{display:none!important;}
     .app-shell{display:block;}
     .main-col{width:100%;}
     .welcome-bar{position:static; background:#fff!important; color:var(--ink-1)!important; padding:0 0 8px; border-bottom:1px solid var(--border);}
-    body.has-logo .print-logo-header{
+    .print-logo-header{
       display:flex; position:fixed; top:0; left:0; right:0; justify-content:center; align-items:center;
       padding:4px 0 3px; background:#fff; border-bottom:1.5px solid var(--blue); z-index:50;
     }
-    body.has-logo .print-logo-header img{max-height:20px; max-width:150px; object-fit:contain;}
-    body.has-logo .hero-logo{display:none!important;}
+    .print-logo-header svg{max-height:20px; max-width:150px; height:20px; width:auto;}
+    .hero-logo{display:none!important;}
     [contenteditable]{border-bottom:none!important;}
     .wrap{max-width:100%; padding:0 6px 20px;}
     .hero,.kpi,.chart-card,.card,.summary-card,.next-steps{box-shadow:none; break-inside:avoid; page-break-inside:avoid;}
@@ -349,14 +350,14 @@
   }
 </style>
 
-<div class="print-logo-header" id="print-logo-header"><img id="print-logo-header-img" alt=""></div>
+<div class="print-logo-header" id="print-logo-header"><svg id="print-logo-header-img" style="height:100%;width:auto;display:block;" viewBox="0 0 205.332 44" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="SELLWERK"><g fill="#00af9c"><path d="m-2534.606 1905.356a9.257 9.257 0 0 0 2.457 1.368 7.723 7.723 0 0 0 2.763.525 4.752 4.752 0 0 0 2.609-.589 1.793 1.793 0 0 0 .891-1.56 1.578 1.578 0 0 0 -.23-.869 2.125 2.125 0 0 0 -.646-.628 5.805 5.805 0 0 0 -.981-.5q-.568-.231-1.243-.46l-2.763-1a10.2 10.2 0 0 1 -1.458-.64 6.093 6.093 0 0 1 -1.3-.922 4.18 4.18 0 0 1 -.936-1.253 3.666 3.666 0 0 1 -.353-1.637 3.6 3.6 0 0 1 .506-1.855 4.936 4.936 0 0 1 1.4-1.5 6.913 6.913 0 0 1 2.133-1 9.783 9.783 0 0 1 2.717-.357 10.037 10.037 0 0 1 3.378.576 9.024 9.024 0 0 1 2.794 1.548l-1.811 1.893a9.411 9.411 0 0 0 -2.026-1.049 6.716 6.716 0 0 0 -2.334-.384 4.387 4.387 0 0 0 -2.3.525 1.615 1.615 0 0 0 -.859 1.444 1.335 1.335 0 0 0 .26.831 2.46 2.46 0 0 0 .707.615 6.141 6.141 0 0 0 1.028.485q.584.217 1.2.422l2.734.947a10.188 10.188 0 0 1 1.626.716 5.7 5.7 0 0 1 1.274.946 4.025 4.025 0 0 1 .844 1.241 4.025 4.025 0 0 1 .306 1.625 3.912 3.912 0 0 1 -.49 1.918 4.809 4.809 0 0 1 -1.429 1.574 7.462 7.462 0 0 1 -2.271 1.073 10.575 10.575 0 0 1 -3.023.4 12.144 12.144 0 0 1 -3.915-.639 10.608 10.608 0 0 1 -3.331-1.817l2.086-2.019z" transform="translate(2584.81 -1879.16)"/><path d="m-2515.5 1906.973h8.841v2.507h-12.4v-16.728h12.095v2.507h-8.535v4.272h7.214v2.506h-7.214z" transform="translate(2587.903 -1879.114)"/><path d="m-2499.233 1892.752v14.221h8.35v2.507h-11.911v-16.728h3.562z" transform="translate(2590.76 -1879.114)"/><path d="m-2483.9 1892.752v14.221h8.35v2.507h-11.91v-16.728h3.561z" transform="translate(2593.451 -1879.114)"/><path d="m-2475.343 1892.752h3.653l1.751 8.44q.243 1.356.489 2.685t.492 2.661h.124q.337-1.331.66-2.673c.215-.894.432-1.785.659-2.673l2.456-8.441h3.1l2.456 8.441c.226.869.45 1.752.677 2.646s.45 1.8.674 2.7h.123q.247-1.354.475-2.685t.476-2.66l1.75-8.441h3.407l-3.838 16.727h-4.42l-2.487-8.8q-.245-.973-.474-1.932t-.416-1.932h-.123q-.215.971-.445 1.932t-.475 1.932l-2.427 8.8h-4.327l-3.991-16.726z" transform="translate(2595.578 -1879.114)"/><path d="m-2446.973 1906.973h8.842v2.507h-12.4v-16.728h12.094v2.507h-8.533v4.272h7.214v2.506h-7.214z" transform="translate(2599.932 -1879.114)"/><path d="m-2430.7 1900.579h2.855a5.747 5.747 0 0 0 3.148-.717 2.4 2.4 0 0 0 1.089-2.148 2.073 2.073 0 0 0 -1.089-2.02 7.033 7.033 0 0 0 -3.148-.563h-2.855v5.449zm7.4 8.9-4.328-6.547h-3.071v6.547h-3.562v-16.728h6.786a15.708 15.708 0 0 1 2.917.255 7.289 7.289 0 0 1 2.333.831 4.351 4.351 0 0 1 1.55 1.521 4.511 4.511 0 0 1 .569 2.355 4.367 4.367 0 0 1 -1.091 3.094 6.118 6.118 0 0 1 -2.9 1.688l4.788 6.983z" transform="translate(2602.789 -1879.114)"/><path d="m-2404.52 1909.48-5.435-7.878-2.886 2.992v4.886h-3.561v-16.728h3.561v7.6h.093l7.153-7.6h3.96l-6.171 6.522 7.214 10.205z" transform="translate(2605.924 -1879.114)"/><path d="m-2549.533 1902.825c-1.362 1.453-4.74 3.225-8.31 4.561a47.465 47.465 0 0 1 -12.968 2.751 47.465 47.465 0 0 0 12.968-2.751c3.57-1.335 6.943-3.108 8.31-4.561z" transform="translate(2580.546 -1877.349)"/><path d="m-2558.825 1886.447 6.429 5.08z" transform="translate(2582.65 -1880.219)"/><path d="m-2570.7 1909.047c-.254.008-.5.01-.721.006.221.004.465.002.721-.006z" transform="translate(2580.439 -1876.258)"/><path d="m-2570.261 1895.232c-2.072 1.194-3.449 2.391-3.332 3.266-.115-.875 1.261-2.072 3.332-3.266z" transform="translate(2580.057 -1878.68)"/><path d="m-2558.772 1886.447s-.13.026-.352.077c.224-.051.352-.077.352-.077z" transform="translate(2582.598 -1880.219)"/><path d="m-2560.73 1886.9-.1.024z" transform="translate(2582.3 -1880.139)"/><path d="m-2562.882 1887.5-.144.042z" transform="translate(2581.913 -1880.035)"/><path d="m-2563.245 1888.36c-1.506.513-3.13 1.119-4.781 1.822a41.211 41.211 0 0 0 -11.068 6.469 41.227 41.227 0 0 1 11.068-6.469c1.651-.703 3.275-1.309 4.781-1.822z" transform="translate(2579.093 -1879.884)"/><path d="m-2575.921 1905.395a11.936 11.936 0 0 1 -2.765-.53 11.936 11.936 0 0 0 2.765.53z" transform="translate(2579.164 -1876.991)"/><path d="m-2563.245 1889.623c1.086-.37 2.109-.69 3.039-.967.047-.012.1-.028.144-.042.922-.272 1.744-.5 2.439-.677l.1-.025c.879-.227 1.533-.379 1.906-.46.223-.051.352-.077.352-.077l6.43 5.079c-2.54-.484-9.8.765-14.848 2.655a38.671 38.671 0 0 0 -5.611 2.59c-2.071 1.194-3.447 2.392-3.332 3.266a.765.765 0 0 0 .1.294c.818 1.364 3.829 1.334 7.22.264s11.725-4.126 17.3-4.7c.658-.068 1.306-.111 1.938-.125a13.333 13.333 0 0 1 5.085.741v-5.288l-19.056-11-19.056 11v5.767a41.192 41.192 0 0 1 11.068-6.47c1.652-.705 3.276-1.312 4.782-1.825z" transform="translate(2579.093 -1881.148)"/><path d="m-2552.049 1911.445a76.626 76.626 0 0 1 -12.147 3.935c-.263.06-.446.1-.54.12l-.071.014-6.429-5.081a5.093 5.093 0 0 0 .53.071q.29.026.629.033c.225 0 .466 0 .72-.006a47.518 47.518 0 0 0 12.967-2.751c3.571-1.337 6.947-3.11 8.31-4.562.564-.6.792-1.152.53-1.59-.818-1.362-3.829-1.333-7.22-.262s-11.725 4.125-17.3 4.7a20.928 20.928 0 0 1 -3.779.076 11.919 11.919 0 0 1 -2.766-.53c-.161-.052-.324-.1-.478-.162v5.29l19.056 11 19.056-11v-5.766a41.222 41.222 0 0 1 -11.068 6.471z" transform="translate(2579.093 -1877.742)"/><path d="m-2566.339 1913.173c-.265.06-.447.1-.541.12.094-.02.28-.06.541-.12z" transform="translate(2581.237 -1875.535)"/><path d="m-2554.273 1910.788a76.525 76.525 0 0 1 -12.146 3.936 76.637 76.637 0 0 0 12.146-3.935 41.259 41.259 0 0 0 11.068-6.469 41.207 41.207 0 0 1 -11.068 6.468z" transform="translate(2581.318 -1877.087)"/><path d="m-2548.033 1901.629c-.818-1.364-3.829-1.334-7.22-.263s-11.726 4.125-17.3 4.7a20.919 20.919 0 0 1 -3.778.076 20.938 20.938 0 0 0 3.78-.076c5.576-.578 13.911-3.632 17.3-4.7s6.4-1.1 7.22.263c.263.438.034.986-.53 1.589.561-.603.79-1.151.528-1.589z" transform="translate(2579.577 -1877.742)"/><path d="m-2571.329 1909.057c-.226 0-.436-.015-.63-.033.194.018.404.028.63.033z" transform="translate(2580.346 -1876.262)"/><path d="m-2550.3 1890.784c-2.539-.485-9.8.766-14.849 2.655a38.66 38.66 0 0 0 -5.611 2.59 38.66 38.66 0 0 1 5.611-2.59c5.049-1.889 12.309-3.139 14.849-2.655z" transform="translate(2580.556 -1879.477)"/><path d="m-2548.969 1894.5c-5.576.578-13.912 3.633-17.3 4.7s-6.4 1.1-7.221-.263a.819.819 0 0 1 -.1-.295.819.819 0 0 0 .1.295c.818 1.363 3.83 1.334 7.221.263s11.725-4.126 17.3-4.7c.657-.068 1.3-.111 1.935-.125-.629.016-1.277.058-1.935.125z" transform="translate(2580.059 -1878.829)"/><path d="m-2578.615 1904.889c-.161-.052-.324-.1-.478-.162.154.059.317.11.478.162z" transform="translate(2579.093 -1877.016)"/><path d="m-2558.839 1886.512c-.373.082-1.026.233-1.906.461.879-.227 1.533-.379 1.906-.461z" transform="translate(2582.313 -1880.208)"/><path d="m-2560.463 1886.926c-.7.18-1.519.4-2.44.676.921-.272 1.744-.496 2.44-.676z" transform="translate(2581.935 -1880.136)"/><path d="m-2562.571 1887.537c-.931.276-1.954.6-3.04.968 1.086-.371 2.111-.692 3.04-.968z" transform="translate(2581.459 -1880.028)"/></g></svg></div>
 
 <div class="app-shell">
 
   <aside class="sidenav">
     <div class="sidenav-brand">
-      <div class="g-dot"></div>
-      <div><div class="name">Search Console</div><div class="sub">Report-Generator</div></div>
+      <svg style="height:26px;width:auto;display:block;" viewBox="0 0 205.332 44" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="SELLWERK"><g fill="#00af9c"><path d="m-2534.606 1905.356a9.257 9.257 0 0 0 2.457 1.368 7.723 7.723 0 0 0 2.763.525 4.752 4.752 0 0 0 2.609-.589 1.793 1.793 0 0 0 .891-1.56 1.578 1.578 0 0 0 -.23-.869 2.125 2.125 0 0 0 -.646-.628 5.805 5.805 0 0 0 -.981-.5q-.568-.231-1.243-.46l-2.763-1a10.2 10.2 0 0 1 -1.458-.64 6.093 6.093 0 0 1 -1.3-.922 4.18 4.18 0 0 1 -.936-1.253 3.666 3.666 0 0 1 -.353-1.637 3.6 3.6 0 0 1 .506-1.855 4.936 4.936 0 0 1 1.4-1.5 6.913 6.913 0 0 1 2.133-1 9.783 9.783 0 0 1 2.717-.357 10.037 10.037 0 0 1 3.378.576 9.024 9.024 0 0 1 2.794 1.548l-1.811 1.893a9.411 9.411 0 0 0 -2.026-1.049 6.716 6.716 0 0 0 -2.334-.384 4.387 4.387 0 0 0 -2.3.525 1.615 1.615 0 0 0 -.859 1.444 1.335 1.335 0 0 0 .26.831 2.46 2.46 0 0 0 .707.615 6.141 6.141 0 0 0 1.028.485q.584.217 1.2.422l2.734.947a10.188 10.188 0 0 1 1.626.716 5.7 5.7 0 0 1 1.274.946 4.025 4.025 0 0 1 .844 1.241 4.025 4.025 0 0 1 .306 1.625 3.912 3.912 0 0 1 -.49 1.918 4.809 4.809 0 0 1 -1.429 1.574 7.462 7.462 0 0 1 -2.271 1.073 10.575 10.575 0 0 1 -3.023.4 12.144 12.144 0 0 1 -3.915-.639 10.608 10.608 0 0 1 -3.331-1.817l2.086-2.019z" transform="translate(2584.81 -1879.16)"/><path d="m-2515.5 1906.973h8.841v2.507h-12.4v-16.728h12.095v2.507h-8.535v4.272h7.214v2.506h-7.214z" transform="translate(2587.903 -1879.114)"/><path d="m-2499.233 1892.752v14.221h8.35v2.507h-11.911v-16.728h3.562z" transform="translate(2590.76 -1879.114)"/><path d="m-2483.9 1892.752v14.221h8.35v2.507h-11.91v-16.728h3.561z" transform="translate(2593.451 -1879.114)"/><path d="m-2475.343 1892.752h3.653l1.751 8.44q.243 1.356.489 2.685t.492 2.661h.124q.337-1.331.66-2.673c.215-.894.432-1.785.659-2.673l2.456-8.441h3.1l2.456 8.441c.226.869.45 1.752.677 2.646s.45 1.8.674 2.7h.123q.247-1.354.475-2.685t.476-2.66l1.75-8.441h3.407l-3.838 16.727h-4.42l-2.487-8.8q-.245-.973-.474-1.932t-.416-1.932h-.123q-.215.971-.445 1.932t-.475 1.932l-2.427 8.8h-4.327l-3.991-16.726z" transform="translate(2595.578 -1879.114)"/><path d="m-2446.973 1906.973h8.842v2.507h-12.4v-16.728h12.094v2.507h-8.533v4.272h7.214v2.506h-7.214z" transform="translate(2599.932 -1879.114)"/><path d="m-2430.7 1900.579h2.855a5.747 5.747 0 0 0 3.148-.717 2.4 2.4 0 0 0 1.089-2.148 2.073 2.073 0 0 0 -1.089-2.02 7.033 7.033 0 0 0 -3.148-.563h-2.855v5.449zm7.4 8.9-4.328-6.547h-3.071v6.547h-3.562v-16.728h6.786a15.708 15.708 0 0 1 2.917.255 7.289 7.289 0 0 1 2.333.831 4.351 4.351 0 0 1 1.55 1.521 4.511 4.511 0 0 1 .569 2.355 4.367 4.367 0 0 1 -1.091 3.094 6.118 6.118 0 0 1 -2.9 1.688l4.788 6.983z" transform="translate(2602.789 -1879.114)"/><path d="m-2404.52 1909.48-5.435-7.878-2.886 2.992v4.886h-3.561v-16.728h3.561v7.6h.093l7.153-7.6h3.96l-6.171 6.522 7.214 10.205z" transform="translate(2605.924 -1879.114)"/><path d="m-2549.533 1902.825c-1.362 1.453-4.74 3.225-8.31 4.561a47.465 47.465 0 0 1 -12.968 2.751 47.465 47.465 0 0 0 12.968-2.751c3.57-1.335 6.943-3.108 8.31-4.561z" transform="translate(2580.546 -1877.349)"/><path d="m-2558.825 1886.447 6.429 5.08z" transform="translate(2582.65 -1880.219)"/><path d="m-2570.7 1909.047c-.254.008-.5.01-.721.006.221.004.465.002.721-.006z" transform="translate(2580.439 -1876.258)"/><path d="m-2570.261 1895.232c-2.072 1.194-3.449 2.391-3.332 3.266-.115-.875 1.261-2.072 3.332-3.266z" transform="translate(2580.057 -1878.68)"/><path d="m-2558.772 1886.447s-.13.026-.352.077c.224-.051.352-.077.352-.077z" transform="translate(2582.598 -1880.219)"/><path d="m-2560.73 1886.9-.1.024z" transform="translate(2582.3 -1880.139)"/><path d="m-2562.882 1887.5-.144.042z" transform="translate(2581.913 -1880.035)"/><path d="m-2563.245 1888.36c-1.506.513-3.13 1.119-4.781 1.822a41.211 41.211 0 0 0 -11.068 6.469 41.227 41.227 0 0 1 11.068-6.469c1.651-.703 3.275-1.309 4.781-1.822z" transform="translate(2579.093 -1879.884)"/><path d="m-2575.921 1905.395a11.936 11.936 0 0 1 -2.765-.53 11.936 11.936 0 0 0 2.765.53z" transform="translate(2579.164 -1876.991)"/><path d="m-2563.245 1889.623c1.086-.37 2.109-.69 3.039-.967.047-.012.1-.028.144-.042.922-.272 1.744-.5 2.439-.677l.1-.025c.879-.227 1.533-.379 1.906-.46.223-.051.352-.077.352-.077l6.43 5.079c-2.54-.484-9.8.765-14.848 2.655a38.671 38.671 0 0 0 -5.611 2.59c-2.071 1.194-3.447 2.392-3.332 3.266a.765.765 0 0 0 .1.294c.818 1.364 3.829 1.334 7.22.264s11.725-4.126 17.3-4.7c.658-.068 1.306-.111 1.938-.125a13.333 13.333 0 0 1 5.085.741v-5.288l-19.056-11-19.056 11v5.767a41.192 41.192 0 0 1 11.068-6.47c1.652-.705 3.276-1.312 4.782-1.825z" transform="translate(2579.093 -1881.148)"/><path d="m-2552.049 1911.445a76.626 76.626 0 0 1 -12.147 3.935c-.263.06-.446.1-.54.12l-.071.014-6.429-5.081a5.093 5.093 0 0 0 .53.071q.29.026.629.033c.225 0 .466 0 .72-.006a47.518 47.518 0 0 0 12.967-2.751c3.571-1.337 6.947-3.11 8.31-4.562.564-.6.792-1.152.53-1.59-.818-1.362-3.829-1.333-7.22-.262s-11.725 4.125-17.3 4.7a20.928 20.928 0 0 1 -3.779.076 11.919 11.919 0 0 1 -2.766-.53c-.161-.052-.324-.1-.478-.162v5.29l19.056 11 19.056-11v-5.766a41.222 41.222 0 0 1 -11.068 6.471z" transform="translate(2579.093 -1877.742)"/><path d="m-2566.339 1913.173c-.265.06-.447.1-.541.12.094-.02.28-.06.541-.12z" transform="translate(2581.237 -1875.535)"/><path d="m-2554.273 1910.788a76.525 76.525 0 0 1 -12.146 3.936 76.637 76.637 0 0 0 12.146-3.935 41.259 41.259 0 0 0 11.068-6.469 41.207 41.207 0 0 1 -11.068 6.468z" transform="translate(2581.318 -1877.087)"/><path d="m-2548.033 1901.629c-.818-1.364-3.829-1.334-7.22-.263s-11.726 4.125-17.3 4.7a20.919 20.919 0 0 1 -3.778.076 20.938 20.938 0 0 0 3.78-.076c5.576-.578 13.911-3.632 17.3-4.7s6.4-1.1 7.22.263c.263.438.034.986-.53 1.589.561-.603.79-1.151.528-1.589z" transform="translate(2579.577 -1877.742)"/><path d="m-2571.329 1909.057c-.226 0-.436-.015-.63-.033.194.018.404.028.63.033z" transform="translate(2580.346 -1876.262)"/><path d="m-2550.3 1890.784c-2.539-.485-9.8.766-14.849 2.655a38.66 38.66 0 0 0 -5.611 2.59 38.66 38.66 0 0 1 5.611-2.59c5.049-1.889 12.309-3.139 14.849-2.655z" transform="translate(2580.556 -1879.477)"/><path d="m-2548.969 1894.5c-5.576.578-13.912 3.633-17.3 4.7s-6.4 1.1-7.221-.263a.819.819 0 0 1 -.1-.295.819.819 0 0 0 .1.295c.818 1.363 3.83 1.334 7.221.263s11.725-4.126 17.3-4.7c.657-.068 1.3-.111 1.935-.125-.629.016-1.277.058-1.935.125z" transform="translate(2580.059 -1878.829)"/><path d="m-2578.615 1904.889c-.161-.052-.324-.1-.478-.162.154.059.317.11.478.162z" transform="translate(2579.093 -1877.016)"/><path d="m-2558.839 1886.512c-.373.082-1.026.233-1.906.461.879-.227 1.533-.379 1.906-.461z" transform="translate(2582.313 -1880.208)"/><path d="m-2560.463 1886.926c-.7.18-1.519.4-2.44.676.921-.272 1.744-.496 2.44-.676z" transform="translate(2581.935 -1880.136)"/><path d="m-2562.571 1887.537c-.931.276-1.954.6-3.04.968 1.086-.371 2.111-.692 3.04-.968z" transform="translate(2581.459 -1880.028)"/></g></svg>
+      <div><div class="sub">SEO-Report-Generator</div></div>
     </div>
     <nav class="sidenav-nav" id="sidenav-nav">
       <a class="nav-link" href="#sec-overview">
@@ -379,24 +380,9 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
         Seiten &amp; CTR
       </a>
-      <a class="nav-link" href="#sec-meta">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-        Title/Meta/ALT
-      </a>
     </nav>
 
     <div class="sidenav-foot" id="subbar">
-      <div class="sidenav-sep"></div>
-      <span>Branding</span>
-      <div class="swatch-row" id="swatch-row"></div>
-      <div class="sidenav-foot-row">
-        <button class="btn small" id="btn-logo">Logo hochladen</button>
-        <img id="logo-preview" class="logo-thumb" hidden>
-        <input type="file" id="logo-input" accept="image/*">
-      </div>
-      <p id="logo-print-hint" hidden style="font-size:10.5px; color:var(--ink-3); line-height:1.4; margin:2px 0 0;">
-        Für sauberes PDF: im Druckdialog unter „Mehr Einstellungen" die <b>Ränder auf „Standard"</b> stellen.
-      </p>
       <div class="sidenav-sep"></div>
       <span>Kundenprofil</span>
       <select id="profile-select"><option value="">– neu –</option></select>
@@ -410,11 +396,14 @@
   <div class="main-col">
 
     <div class="welcome-bar">
-      <div class="wtext" id="welcome-text">Willkommen zurück<span id="welcome-name"></span>!</div>
       <div class="welcome-bar-actions" id="welcome-actions">
         <button class="btn small" id="btn-new">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6h6M20 20v-6h-6"/><path d="M20 10a8 8 0 0 0-14.3-4.6M4 14a8 8 0 0 0 14.3 4.6"/></svg>
           Neue Datei
+        </button>
+        <button class="btn small" id="btn-save-html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+          Als HTML speichern
         </button>
         <button class="btn small primary" id="btn-print">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-5a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1h-2M6 14h12v7H6z"/></svg>
@@ -493,7 +482,7 @@
 
     <div class="hero" id="sec-overview">
       <span class="eyebrow">SEO-Bericht</span>
-      <img class="hero-logo" id="hero-logo" hidden>
+      <svg class="hero-logo" id="hero-logo" style="width:auto;" viewBox="0 0 205.332 44" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="SELLWERK"><g fill="#00af9c"><path d="m-2534.606 1905.356a9.257 9.257 0 0 0 2.457 1.368 7.723 7.723 0 0 0 2.763.525 4.752 4.752 0 0 0 2.609-.589 1.793 1.793 0 0 0 .891-1.56 1.578 1.578 0 0 0 -.23-.869 2.125 2.125 0 0 0 -.646-.628 5.805 5.805 0 0 0 -.981-.5q-.568-.231-1.243-.46l-2.763-1a10.2 10.2 0 0 1 -1.458-.64 6.093 6.093 0 0 1 -1.3-.922 4.18 4.18 0 0 1 -.936-1.253 3.666 3.666 0 0 1 -.353-1.637 3.6 3.6 0 0 1 .506-1.855 4.936 4.936 0 0 1 1.4-1.5 6.913 6.913 0 0 1 2.133-1 9.783 9.783 0 0 1 2.717-.357 10.037 10.037 0 0 1 3.378.576 9.024 9.024 0 0 1 2.794 1.548l-1.811 1.893a9.411 9.411 0 0 0 -2.026-1.049 6.716 6.716 0 0 0 -2.334-.384 4.387 4.387 0 0 0 -2.3.525 1.615 1.615 0 0 0 -.859 1.444 1.335 1.335 0 0 0 .26.831 2.46 2.46 0 0 0 .707.615 6.141 6.141 0 0 0 1.028.485q.584.217 1.2.422l2.734.947a10.188 10.188 0 0 1 1.626.716 5.7 5.7 0 0 1 1.274.946 4.025 4.025 0 0 1 .844 1.241 4.025 4.025 0 0 1 .306 1.625 3.912 3.912 0 0 1 -.49 1.918 4.809 4.809 0 0 1 -1.429 1.574 7.462 7.462 0 0 1 -2.271 1.073 10.575 10.575 0 0 1 -3.023.4 12.144 12.144 0 0 1 -3.915-.639 10.608 10.608 0 0 1 -3.331-1.817l2.086-2.019z" transform="translate(2584.81 -1879.16)"/><path d="m-2515.5 1906.973h8.841v2.507h-12.4v-16.728h12.095v2.507h-8.535v4.272h7.214v2.506h-7.214z" transform="translate(2587.903 -1879.114)"/><path d="m-2499.233 1892.752v14.221h8.35v2.507h-11.911v-16.728h3.562z" transform="translate(2590.76 -1879.114)"/><path d="m-2483.9 1892.752v14.221h8.35v2.507h-11.91v-16.728h3.561z" transform="translate(2593.451 -1879.114)"/><path d="m-2475.343 1892.752h3.653l1.751 8.44q.243 1.356.489 2.685t.492 2.661h.124q.337-1.331.66-2.673c.215-.894.432-1.785.659-2.673l2.456-8.441h3.1l2.456 8.441c.226.869.45 1.752.677 2.646s.45 1.8.674 2.7h.123q.247-1.354.475-2.685t.476-2.66l1.75-8.441h3.407l-3.838 16.727h-4.42l-2.487-8.8q-.245-.973-.474-1.932t-.416-1.932h-.123q-.215.971-.445 1.932t-.475 1.932l-2.427 8.8h-4.327l-3.991-16.726z" transform="translate(2595.578 -1879.114)"/><path d="m-2446.973 1906.973h8.842v2.507h-12.4v-16.728h12.094v2.507h-8.533v4.272h7.214v2.506h-7.214z" transform="translate(2599.932 -1879.114)"/><path d="m-2430.7 1900.579h2.855a5.747 5.747 0 0 0 3.148-.717 2.4 2.4 0 0 0 1.089-2.148 2.073 2.073 0 0 0 -1.089-2.02 7.033 7.033 0 0 0 -3.148-.563h-2.855v5.449zm7.4 8.9-4.328-6.547h-3.071v6.547h-3.562v-16.728h6.786a15.708 15.708 0 0 1 2.917.255 7.289 7.289 0 0 1 2.333.831 4.351 4.351 0 0 1 1.55 1.521 4.511 4.511 0 0 1 .569 2.355 4.367 4.367 0 0 1 -1.091 3.094 6.118 6.118 0 0 1 -2.9 1.688l4.788 6.983z" transform="translate(2602.789 -1879.114)"/><path d="m-2404.52 1909.48-5.435-7.878-2.886 2.992v4.886h-3.561v-16.728h3.561v7.6h.093l7.153-7.6h3.96l-6.171 6.522 7.214 10.205z" transform="translate(2605.924 -1879.114)"/><path d="m-2549.533 1902.825c-1.362 1.453-4.74 3.225-8.31 4.561a47.465 47.465 0 0 1 -12.968 2.751 47.465 47.465 0 0 0 12.968-2.751c3.57-1.335 6.943-3.108 8.31-4.561z" transform="translate(2580.546 -1877.349)"/><path d="m-2558.825 1886.447 6.429 5.08z" transform="translate(2582.65 -1880.219)"/><path d="m-2570.7 1909.047c-.254.008-.5.01-.721.006.221.004.465.002.721-.006z" transform="translate(2580.439 -1876.258)"/><path d="m-2570.261 1895.232c-2.072 1.194-3.449 2.391-3.332 3.266-.115-.875 1.261-2.072 3.332-3.266z" transform="translate(2580.057 -1878.68)"/><path d="m-2558.772 1886.447s-.13.026-.352.077c.224-.051.352-.077.352-.077z" transform="translate(2582.598 -1880.219)"/><path d="m-2560.73 1886.9-.1.024z" transform="translate(2582.3 -1880.139)"/><path d="m-2562.882 1887.5-.144.042z" transform="translate(2581.913 -1880.035)"/><path d="m-2563.245 1888.36c-1.506.513-3.13 1.119-4.781 1.822a41.211 41.211 0 0 0 -11.068 6.469 41.227 41.227 0 0 1 11.068-6.469c1.651-.703 3.275-1.309 4.781-1.822z" transform="translate(2579.093 -1879.884)"/><path d="m-2575.921 1905.395a11.936 11.936 0 0 1 -2.765-.53 11.936 11.936 0 0 0 2.765.53z" transform="translate(2579.164 -1876.991)"/><path d="m-2563.245 1889.623c1.086-.37 2.109-.69 3.039-.967.047-.012.1-.028.144-.042.922-.272 1.744-.5 2.439-.677l.1-.025c.879-.227 1.533-.379 1.906-.46.223-.051.352-.077.352-.077l6.43 5.079c-2.54-.484-9.8.765-14.848 2.655a38.671 38.671 0 0 0 -5.611 2.59c-2.071 1.194-3.447 2.392-3.332 3.266a.765.765 0 0 0 .1.294c.818 1.364 3.829 1.334 7.22.264s11.725-4.126 17.3-4.7c.658-.068 1.306-.111 1.938-.125a13.333 13.333 0 0 1 5.085.741v-5.288l-19.056-11-19.056 11v5.767a41.192 41.192 0 0 1 11.068-6.47c1.652-.705 3.276-1.312 4.782-1.825z" transform="translate(2579.093 -1881.148)"/><path d="m-2552.049 1911.445a76.626 76.626 0 0 1 -12.147 3.935c-.263.06-.446.1-.54.12l-.071.014-6.429-5.081a5.093 5.093 0 0 0 .53.071q.29.026.629.033c.225 0 .466 0 .72-.006a47.518 47.518 0 0 0 12.967-2.751c3.571-1.337 6.947-3.11 8.31-4.562.564-.6.792-1.152.53-1.59-.818-1.362-3.829-1.333-7.22-.262s-11.725 4.125-17.3 4.7a20.928 20.928 0 0 1 -3.779.076 11.919 11.919 0 0 1 -2.766-.53c-.161-.052-.324-.1-.478-.162v5.29l19.056 11 19.056-11v-5.766a41.222 41.222 0 0 1 -11.068 6.471z" transform="translate(2579.093 -1877.742)"/><path d="m-2566.339 1913.173c-.265.06-.447.1-.541.12.094-.02.28-.06.541-.12z" transform="translate(2581.237 -1875.535)"/><path d="m-2554.273 1910.788a76.525 76.525 0 0 1 -12.146 3.936 76.637 76.637 0 0 0 12.146-3.935 41.259 41.259 0 0 0 11.068-6.469 41.207 41.207 0 0 1 -11.068 6.468z" transform="translate(2581.318 -1877.087)"/><path d="m-2548.033 1901.629c-.818-1.364-3.829-1.334-7.22-.263s-11.726 4.125-17.3 4.7a20.919 20.919 0 0 1 -3.778.076 20.938 20.938 0 0 0 3.78-.076c5.576-.578 13.911-3.632 17.3-4.7s6.4-1.1 7.22.263c.263.438.034.986-.53 1.589.561-.603.79-1.151.528-1.589z" transform="translate(2579.577 -1877.742)"/><path d="m-2571.329 1909.057c-.226 0-.436-.015-.63-.033.194.018.404.028.63.033z" transform="translate(2580.346 -1876.262)"/><path d="m-2550.3 1890.784c-2.539-.485-9.8.766-14.849 2.655a38.66 38.66 0 0 0 -5.611 2.59 38.66 38.66 0 0 1 5.611-2.59c5.049-1.889 12.309-3.139 14.849-2.655z" transform="translate(2580.556 -1879.477)"/><path d="m-2548.969 1894.5c-5.576.578-13.912 3.633-17.3 4.7s-6.4 1.1-7.221-.263a.819.819 0 0 1 -.1-.295.819.819 0 0 0 .1.295c.818 1.363 3.83 1.334 7.221.263s11.725-4.126 17.3-4.7c.657-.068 1.3-.111 1.935-.125-.629.016-1.277.058-1.935.125z" transform="translate(2580.059 -1878.829)"/><path d="m-2578.615 1904.889c-.161-.052-.324-.1-.478-.162.154.059.317.11.478.162z" transform="translate(2579.093 -1877.016)"/><path d="m-2558.839 1886.512c-.373.082-1.026.233-1.906.461.879-.227 1.533-.379 1.906-.461z" transform="translate(2582.313 -1880.208)"/><path d="m-2560.463 1886.926c-.7.18-1.519.4-2.44.676.921-.272 1.744-.496 2.44-.676z" transform="translate(2581.935 -1880.136)"/><path d="m-2562.571 1887.537c-.931.276-1.954.6-3.04.968 1.086-.371 2.111-.692 3.04-.968z" transform="translate(2581.459 -1880.028)"/></g></svg>
       <h1>Sichtbarkeits-Report für <b contenteditable="true" id="f-website">dr-braunsteiner.de</b></h1>
       <p class="hero-sub" contenteditable="true" id="f-client" data-placeholder="Kundenname eintragen">Zahnarztpraxis Dr. Braunsteiner · Essen-Rüttenscheid</p>
       <div class="hero-meta">
@@ -538,13 +527,13 @@
       <div class="kpi-grid kpi-grid-4" id="kpi-metrics-grid"></div>
     </div>
 
-    <div class="section">
+    <div class="section" id="sec-trend-monthly">
       <div class="section-head">
-        <h2 id="trend-title">Entwicklung pro Woche</h2>
-        <p id="trend-note"></p>
+        <h2>Entwicklung pro Monat</h2>
+        <p id="trend-monthly-note"></p>
       </div>
-      <p class="table-note" style="margin-top:-6px;">Zeigt, wie sich Klicks, Impressionen und die durchschnittliche Position in Google über den Zeitraum entwickelt haben – gestrichelte Linien markieren unvollständige Wochen am Rand des Exports.</p>
-      <div class="chart-grid" id="chart-grid"></div>
+      <p class="table-note" style="margin-top:-6px;">Tatsächliche Klicks, Impressionen und durchschnittliche Position je Kalendermonat – ohne Hochrechnung.</p>
+      <div class="chart-grid" id="chart-grid-monthly"></div>
     </div>
 
     <div class="section" id="sec-visibility">
@@ -681,42 +670,6 @@
             <thead><tr><th>Suchanfrage</th><th class="num">CTR</th><th class="num">Erwartet</th><th class="num">Ø Pos.</th></tr></thead>
             <tbody id="ctr-table-body"></tbody>
           </table>
-        </div>
-      </div>
-    </div>
-
-    <div class="section" id="sec-meta">
-      <div class="section-head">
-        <h2>Title, Meta-Description &amp; ALT-Texte</h2>
-        <p>Der GSC-Export zeigt nicht, was aktuell im Title, der Meta-Description oder den Bild-ALT-Texten steht – nur, wo die Klickrate darauf hindeutet, dass sich ein Blick lohnt. Die konkrete Überarbeitung wird rechts als To-do festgehalten.</p>
-      </div>
-      <div class="table-grid">
-        <div class="card">
-          <h3>Seiten mit dem größten Handlungsbedarf</h3>
-          <p class="table-note">Seiten, deren Klickrate am deutlichsten unter dem für ihre Position üblichen Wert liegt, sortiert nach geschätzt entgangenen Klicks. Meist ein Zeichen für einen wenig ansprechenden Title/Meta-Description.</p>
-          <table>
-            <thead><tr><th>Seite</th><th class="num">CTR</th><th class="num">Erwartet</th><th class="num">Ø Pos.</th><th class="num">Entgangen*</th></tr></thead>
-            <tbody id="meta-action-table-body"></tbody>
-          </table>
-          <p class="table-note" style="margin-top:12px;">* geschätzte zusätzliche Klicks im Zeitraum, wäre die CTR auf dem für die Position üblichen Niveau.</p>
-        </div>
-        <div class="card">
-          <h3>Checkliste: Title / Meta-Description / ALT-Texte</h3>
-          <p class="table-note">Manuell geführte To-do-Liste, z. B. übernommen aus der Liste links oder frei eingetragen – wird mit dem Kundenprofil gespeichert.</p>
-          <div id="meta-tasks-list"></div>
-          <div style="border-top:1px solid var(--border); margin-top:10px; padding-top:14px;">
-            <div class="field-row">
-              <div>
-                <div class="field-label">Seite / Bereich</div>
-                <input type="text" class="field-input" id="f-meta-task-page" placeholder="z. B. /leistungen/ oder Startseite-Bilder">
-              </div>
-              <div>
-                <div class="field-label">Was überarbeiten</div>
-                <input type="text" class="field-input" id="f-meta-task-note" placeholder="z. B. Title &amp; Meta-Description neu, ALT-Texte ergänzen">
-              </div>
-            </div>
-            <div style="margin-top:8px;"><button class="btn small" type="button" id="btn-meta-task-add">+ Hinzufügen</button></div>
-          </div>
         </div>
       </div>
     </div>
@@ -996,19 +949,6 @@
   }
 
   /* ---- Seiten mit Title/Meta-Handlungsbedarf, aus CTR-Abweichung der Seite selbst ---- */
-  function computePageActionList(pages){
-    return pages.filter(function(p){
-      if (p.impr<20) return false;
-      var actual = p.impr? p.clicks/p.impr : 0;
-      return actual < expectedCTR(p.pos)*0.6;
-    }).map(function(p){
-      var actual = p.impr? p.clicks/p.impr : 0;
-      var exp = expectedCTR(p.pos);
-      var lost = Math.max(0, Math.round(p.impr*(exp-actual)));
-      return {url:p.url, clicks:p.clicks, impr:p.impr, pos:p.pos, actual:actual, expected:exp, lost:lost};
-    }).sort(function(a,b){ return b.lost-a.lost; }).slice(0,8);
-  }
-
   function shortPath(url){
     try{ var u = new URL(url); return u.pathname==='/'||!u.pathname ? '/' : u.pathname; }catch(e){ return url; }
   }
@@ -1329,7 +1269,6 @@
     document.getElementById('f-website').textContent = meta.website;
     document.getElementById('f-client').textContent = meta.client || '';
     document.getElementById('f-author').textContent = meta.author;
-    document.getElementById('welcome-name').textContent = meta.author ? (', '+meta.author) : '';
     document.getElementById('f-brand').textContent = meta.brandTerm || guessBrandTerm(meta.website);
     document.getElementById('f-source').textContent = 'Quelle: Google Search Console Performance-Export' + (meta.exportDate ? (', '+meta.exportDate) : '');
     var todayStr = fmtDateDE(new Date());
@@ -1480,21 +1419,28 @@
       if (rmBtn) rmBtn.addEventListener('click', function(){ data.compareTotals=null; data.compareQueries=null; render(data, meta); });
     }
 
-    /* ---- charts ---- */
-    document.getElementById('trend-title').textContent = data.mode==='daily' ? 'Entwicklung pro Woche' : 'Entwicklung pro Monat';
-    document.getElementById('trend-note').textContent = trendSeries.length + (data.mode==='daily' ? ' Wochen' : ' Zeiträume') + ' · erste/letzte Periode ggf. unvollständig im Export (gestrichelt)';
-    var grid = document.getElementById('chart-grid');
-    if (trendSeries.length >= 2){
-      var configs = [
-        {key:"clicks", title:"Klicks", color:"var(--blue)", fmt:deNum, invert:false},
-        {key:"impr",   title:"Impressionen", color:"var(--orange)", fmt:deNum, invert:false},
-        {key:"pos",    title:"Ø Position", color:"var(--good)", fmt:dePos, invert:true}
-      ];
-      var built = configs.map(function(c){ return buildChartHTML(c, trendSeries); });
-      grid.innerHTML = built.map(function(b){return b.html;}).join("");
-      built.forEach(function(b,i){ wireChart(b, configs[i], trendSeries); });
-    } else {
-      grid.innerHTML = '<div class="card"><p class="empty-hint">Zu wenige Datenpunkte für einen Verlauf – lade einen Export mit einem längeren Zeitraum.</p></div>';
+    /* ---- Entwicklung pro Monat: tatsächliche Monatssummen, keine Unvollständig-Kennzeichnung ---- */
+    var secMonthlyTrend = document.getElementById('sec-trend-monthly');
+    if (secMonthlyTrend){
+      if (monthlyBuckets.length>=2){
+        secMonthlyTrend.hidden = false;
+        document.getElementById('trend-monthly-note').textContent = monthlyBuckets.length+' Monate';
+        var monthlyTrendSeries = monthlyBuckets.map(function(b){
+          return {label:b.label, clicks:b.clicks, impr:b.impr, pos:b.pos, partial:false};
+        });
+        var gridM = document.getElementById('chart-grid-monthly');
+        var configsM = [
+          {key:"clicks", title:"Klicks", color:"var(--blue)", fmt:deNum, invert:false},
+          {key:"impr",   title:"Impressionen", color:"var(--orange)", fmt:deNum, invert:false},
+          {key:"pos",    title:"Ø Position", color:"var(--good)", fmt:dePos, invert:true}
+        ];
+        var builtM = configsM.map(function(c){ return buildChartHTML(c, monthlyTrendSeries); });
+        gridM.innerHTML = builtM.map(function(b){return b.html;}).join("");
+        builtM.forEach(function(b,i){ wireChart(b, configsM[i], monthlyTrendSeries); });
+      } else {
+        secMonthlyTrend.hidden = true;
+        document.getElementById('chart-grid-monthly').innerHTML = '<div class="card"><p class="empty-hint">Zu wenige Datenpunkte für einen Verlauf – lade einen Export mit einem längeren Zeitraum.</p></div>';
+      }
     }
 
     /* ---- month table ---- */
@@ -1553,31 +1499,12 @@
       return '<tr><td class="q">'+q.query+'</td><td class="num">'+dePct(actual).split(',')[0]+'&thinsp;%</td><td class="num">'+dePct(expectedCTR(q.pos)).split(',')[0]+'&thinsp;%</td><td class="num">'+dePos(q.pos)+'</td></tr>';
     }).join('') : '<tr><td colspan="4" class="empty-hint">Keine auffälligen CTR-Abweichungen gefunden.</td></tr>';
 
-    /* ---- Title/Meta/ALT: automatische Handlungsliste + manuelle Checkliste ---- */
-    var pageActions = computePageActionList(pages);
-    document.getElementById('meta-action-table-body').innerHTML = pageActions.length ? pageActions.map(function(p){
-      return '<tr><td class="q">'+shortPath(p.url)+
-        ' <button type="button" class="btn small" data-meta-take="'+shortPath(p.url).replace(/"/g,'&quot;')+'" style="padding:2px 8px; font-size:10.5px; margin-left:4px;">+ übernehmen</button></td>'+
-        '<td class="num">'+dePct(p.actual).split(',')[0]+'&thinsp;%</td><td class="num">'+dePct(p.expected).split(',')[0]+'&thinsp;%</td><td class="num">'+dePos(p.pos)+'</td><td class="num">'+deNum(p.lost)+'</td></tr>';
-    }).join('') : '<tr><td colspan="5" class="empty-hint">Keine Seite mit auffälliger CTR-Abweichung gefunden.</td></tr>';
-    Array.prototype.forEach.call(document.querySelectorAll('[data-meta-take]'), function(btn){
-      btn.addEventListener('click', function(){
-        if (activeIndex<0) return;
-        var page = btn.getAttribute('data-meta-take');
-        var r = reports[activeIndex];
-        if (!r.meta.metaTasks) r.meta.metaTasks = [];
-        r.meta.metaTasks.push({id:'mt'+Date.now(), page:page, note:'Title & Meta-Description überarbeiten', status:'offen'});
-        renderActive();
-      });
-    });
-
     /* ---- briefing keywords (rounds) & regional suggestions ---- */
     document.getElementById('f-region').value = meta.region || '';
     document.getElementById('f-services').value = (meta.services||[]).join(', ');
     renderRoundsList(queries, meta.briefingRounds || [], data.compareQueries || null);
     renderRegionalSuggestions(queries);
     renderDomainsChips();
-    renderMetaTasksList();
   }
 
   /* ============================================================
@@ -1639,16 +1566,8 @@
   ];
 
   /* ============================================================
-     5. BRANDING (accent colour / logo)
+     5. BRANDING (SELLWERK, fest – nicht veränderbar)
   ============================================================ */
-  var ACCENT_PRESETS = ['#2a78d6','#0f9d58','#7c4dff','#d23669','#00897b','#f29900'];
-  var currentAccent = ACCENT_PRESETS[0];
-  var currentLogo = null;
-
-  function hexToSoft(hex){
-    var r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
-    return 'rgba('+r+','+g+','+b+',0.12)';
-  }
   function renderDomainsChips(){
     var box = document.getElementById('domains-chips');
     if (!box) return;
@@ -1666,76 +1585,6 @@
         renderDomainsChips();
       });
     });
-  }
-  function renderMetaTasksList(){
-    var box = document.getElementById('meta-tasks-list');
-    if (!box) return;
-    if (activeIndex<0 || !reports[activeIndex]){ box.innerHTML=''; return; }
-    var tasks = reports[activeIndex].meta.metaTasks || [];
-    if (!tasks.length){ box.innerHTML = '<p class="empty-hint">Noch keine Einträge – rechts hinzufügen oder links „+ übernehmen" klicken.</p>'; return; }
-    box.innerHTML = tasks.map(function(t){
-      var done = t.status==='erledigt';
-      return '<div style="display:flex; align-items:flex-start; gap:8px; padding:8px 0; border-bottom:1px solid var(--surface-2);">'+
-        '<input type="checkbox" data-meta-task-toggle="'+t.id+'" '+(done?'checked':'')+' style="margin-top:3px;">'+
-        '<div style="flex:1;">'+
-          '<div style="font-size:12.5px; font-weight:500;'+(done?' text-decoration:line-through; color:var(--ink-3);':'')+'">'+(t.page||'–')+'</div>'+
-          '<div style="font-size:12px; color:var(--ink-2);'+(done?' text-decoration:line-through;':'')+'">'+(t.note||'')+'</div>'+
-        '</div>'+
-        '<button type="button" class="btn small" data-meta-task-del="'+t.id+'" style="padding:3px 9px; font-size:11px;">Löschen</button>'+
-      '</div>';
-    }).join('');
-    Array.prototype.forEach.call(box.querySelectorAll('[data-meta-task-toggle]'), function(cb){
-      cb.addEventListener('change', function(){
-        if (activeIndex<0) return;
-        var id = cb.getAttribute('data-meta-task-toggle');
-        var task = (reports[activeIndex].meta.metaTasks||[]).find(function(t){ return t.id===id; });
-        if (task) task.status = cb.checked ? 'erledigt' : 'offen';
-        renderMetaTasksList();
-      });
-    });
-    Array.prototype.forEach.call(box.querySelectorAll('[data-meta-task-del]'), function(btn){
-      btn.addEventListener('click', function(){
-        if (activeIndex<0) return;
-        var id = btn.getAttribute('data-meta-task-del');
-        reports[activeIndex].meta.metaTasks = (reports[activeIndex].meta.metaTasks||[]).filter(function(t){ return t.id!==id; });
-        renderMetaTasksList();
-      });
-    });
-  }
-  function renderSwatches(){
-    var row = document.getElementById('swatch-row');
-    row.innerHTML = ACCENT_PRESETS.map(function(c){
-      return '<button type="button" class="swatch'+(c===currentAccent?' active':'')+'" style="background:'+c+'" data-c="'+c+'" title="Akzentfarbe"></button>';
-    }).join('');
-    Array.prototype.forEach.call(row.querySelectorAll('.swatch'), function(sw){
-      sw.addEventListener('click', function(){ applyAccent(sw.getAttribute('data-c')); });
-    });
-  }
-  function applyAccent(hex){
-    currentAccent = hex;
-    document.documentElement.style.setProperty('--blue', hex);
-    document.documentElement.style.setProperty('--blue-soft', hexToSoft(hex));
-    renderSwatches();
-  }
-  function applyLogo(dataUrl){
-    currentLogo = dataUrl || null;
-    var heroLogo = document.getElementById('hero-logo');
-    var preview = document.getElementById('logo-preview');
-    var printImg = document.getElementById('print-logo-header-img');
-    var pageStyle = document.getElementById('print-page-margin-style');
-    var printHint = document.getElementById('logo-print-hint');
-    if (currentLogo){
-      heroLogo.src=currentLogo; heroLogo.hidden=false; preview.src=currentLogo; preview.hidden=false;
-      if (printImg) printImg.src = currentLogo;
-      document.body.classList.add('has-logo');
-      if (pageStyle) pageStyle.textContent = '@page{ margin-top:15mm; }';
-      if (printHint) printHint.hidden = false;
-    } else {
-      heroLogo.hidden=true; preview.hidden=true;
-      document.body.classList.remove('has-logo');
-      if (pageStyle) pageStyle.textContent = '';
-      if (printHint) printHint.hidden = true;
-    }
   }
 
   /* ============================================================
@@ -2051,6 +1900,35 @@
   document.getElementById('btn-new').addEventListener('click', showSetup);
   document.getElementById('btn-load-own').addEventListener('click', showSetup);
   document.getElementById('btn-print').addEventListener('click', function(){ syncEditsToActive(); window.print(); });
+  document.getElementById('btn-save-html').addEventListener('click', function(){
+    syncEditsToActive();
+    var html = '<!doctype html>\n' + document.documentElement.outerHTML;
+    var siteName = (document.getElementById('f-website')||{}).textContent || 'report';
+    var safe = siteName.trim().replace(/[^a-z0-9.\-]+/gi, '_');
+    var today = new Date();
+    var stamp = today.getFullYear()+pad2(today.getMonth()+1)+pad2(today.getDate());
+    var filename = 'SEO-Report-'+(safe||'report')+'-'+stamp+'.html';
+
+    function browserDownload(){
+      var blob = new Blob([html], {type:'text/html'});
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+    }
+
+    if (window.claude && typeof window.claude.use === 'function'){
+      window.claude.use('downloads').then(function(downloads){
+        if (!downloads) { browserDownload(); return; }
+        downloads.save({filename:filename, data:html}).catch(function(){ /* Nutzer hat abgelehnt oder Fehler – kein Fallback nötig, Dialog kam bereits */ });
+      }, function(){ browserDownload(); });
+    } else {
+      browserDownload();
+    }
+  });
 
   var dz = document.getElementById('dropzone');
   dz.addEventListener('click', function(){ document.getElementById('file-input').click(); });
@@ -2112,33 +1990,6 @@
     if (e.key==='Enter'){ e.preventDefault(); document.getElementById('btn-domain-add').click(); }
   });
 
-  /* ---- Title/Meta/ALT: manuelle Checkliste ---- */
-  document.getElementById('btn-meta-task-add').addEventListener('click', function(){
-    if (activeIndex<0) return;
-    var pageInput = document.getElementById('f-meta-task-page');
-    var noteInput = document.getElementById('f-meta-task-note');
-    var page = pageInput.value.trim();
-    var note = noteInput.value.trim();
-    if (!page && !note) return;
-    var r = reports[activeIndex];
-    if (!r.meta.metaTasks) r.meta.metaTasks = [];
-    r.meta.metaTasks.push({id:'mt'+Date.now(), page:page, note:note, status:'offen'});
-    pageInput.value = ''; noteInput.value = '';
-    renderMetaTasksList();
-  });
-  document.getElementById('f-meta-task-note').addEventListener('keydown', function(e){
-    if (e.key==='Enter'){ e.preventDefault(); document.getElementById('btn-meta-task-add').click(); }
-  });
-
-  /* ---- branding ---- */
-  document.getElementById('btn-logo').addEventListener('click', function(){ document.getElementById('logo-input').click(); });
-  document.getElementById('logo-input').addEventListener('change', function(e){
-    var f = e.target.files[0]; e.target.value=''; if (!f) return;
-    var reader = new FileReader();
-    reader.onload = function(ev){ applyLogo(ev.target.result); };
-    reader.readAsDataURL(f);
-  });
-
   /* ---- profiles ---- */
   document.getElementById('btn-profile-save').addEventListener('click', function(){
     syncEditsToActive();
@@ -2149,7 +2000,7 @@
     var profiles = loadProfiles();
     var domains = r.meta.customerDomains || [];
     if (r.meta.website && domains.indexOf(r.meta.website)===-1) domains = domains.concat([r.meta.website]);
-    profiles[name] = {website:r.meta.website, client:r.meta.client, author:r.meta.author, footer:r.meta.footer, brandTerm:r.meta.brandTerm, briefingRounds:r.meta.briefingRounds, region:r.meta.region, services:r.meta.services, domains:domains, metaTasks:r.meta.metaTasks||[], accentColor:currentAccent, logoDataUrl:currentLogo};
+    profiles[name] = {website:r.meta.website, client:r.meta.client, author:r.meta.author, footer:r.meta.footer, brandTerm:r.meta.brandTerm, briefingRounds:r.meta.briefingRounds, region:r.meta.region, services:r.meta.services, domains:domains};
     saveProfilesObj(profiles);
     refreshProfileSelect(name);
   });
@@ -2161,9 +2012,7 @@
     var r = reports[activeIndex];
     r.meta.website=p.website; r.meta.client=p.client; r.meta.author=p.author; r.meta.footer=p.footer; r.meta.brandTerm=p.brandTerm;
     r.meta.briefingRounds = p.briefingRounds || (p.briefingKeywords && p.briefingKeywords.length ? [{id:'r'+Date.now(), label:'Übernommen', date:new Date().toISOString().slice(0,10), keywords:p.briefingKeywords}] : []);
-    r.meta.region=p.region||''; r.meta.services=p.services||[]; r.meta.customerDomains=p.domains||[]; r.meta.metaTasks=p.metaTasks||[];
-    if (p.accentColor) applyAccent(p.accentColor);
-    applyLogo(p.logoDataUrl||null);
+    r.meta.region=p.region||''; r.meta.services=p.services||[]; r.meta.customerDomains=p.domains||[];
     renderActive();
   });
   document.getElementById('btn-profile-delete').addEventListener('click', function(){
@@ -2176,7 +2025,6 @@
     refreshProfileSelect();
   });
 
-  renderSwatches();
   refreshProfileSelect();
   initSample();
   showSetup();
