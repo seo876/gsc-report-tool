@@ -432,7 +432,8 @@
         <div class="field-row">
           <div>
             <div class="field-label">Kunde (Property)</div>
-            <select class="field-input" id="gsc-site-select" style="min-width:260px;"></select>
+            <input type="text" class="field-input" id="gsc-site-search" list="gsc-site-list" autocomplete="off" placeholder="Domain tippen zum Suchen…" style="min-width:260px;">
+            <datalist id="gsc-site-list"></datalist>
           </div>
           <div>
             <div class="field-label">Zeitraum</div>
@@ -1749,9 +1750,32 @@
   ============================================================ */
   var GSC_CLIENT_ID = '1046410360925-4kq5ddhlpmcpea743v641kvlrd76fu16.apps.googleusercontent.com';
   var GSC_SCOPE = 'https://www.googleapis.com/auth/webmasters.readonly';
+  var GSC_TOKEN_STORAGE_KEY = 'gscReportTool.token';
   var gscTokenClient = null;
   var gscAccessToken = null;
   var gscSites = [];
+  var gscSiteMap = {};
+  var gscSelectedSiteUrl = null;
+
+  function gscSaveToken(token, expiresInSec){
+    try{
+      var expiresAt = Date.now() + (Math.max(0,(+expiresInSec||0)) * 1000);
+      localStorage.setItem(GSC_TOKEN_STORAGE_KEY, JSON.stringify({token:token, expiresAt:expiresAt}));
+    }catch(e){ /* localStorage evtl. nicht verfügbar – dann wird jedes Mal neu angemeldet */ }
+  }
+  function gscLoadToken(){
+    try{
+      var raw = localStorage.getItem(GSC_TOKEN_STORAGE_KEY);
+      if (!raw) return null;
+      var data = JSON.parse(raw);
+      if (!data || !data.token || !data.expiresAt) return null;
+      if (data.expiresAt - Date.now() < 60000) return null; // < 1 Min. Restlaufzeit: als abgelaufen behandeln
+      return data.token;
+    }catch(e){ return null; }
+  }
+  function gscClearToken(){
+    try{ localStorage.removeItem(GSC_TOKEN_STORAGE_KEY); }catch(e){}
+  }
 
   function gscSetStatus(msg, isError){
     var el = document.getElementById('gsc-status');
@@ -1772,6 +1796,7 @@
         callback: function(resp){
           if (resp && resp.access_token){
             gscAccessToken = resp.access_token;
+            gscSaveToken(resp.access_token, resp.expires_in);
             callback && callback();
           } else {
             gscSetStatus('Anmeldung fehlgeschlagen oder abgebrochen.', true);
@@ -1789,7 +1814,7 @@
     opts = opts || {};
     opts.headers = Object.assign({'Authorization':'Bearer '+gscAccessToken}, opts.headers||{});
     return fetch(url, opts).then(function(res){
-      if (res.status === 401){ gscAccessToken = null; throw new Error('Sitzung abgelaufen. Bitte oben erneut mit Google anmelden.'); }
+      if (res.status === 401){ gscAccessToken = null; gscClearToken(); throw new Error('Sitzung abgelaufen. Bitte oben erneut mit Google anmelden.'); }
       if (!res.ok){
         return res.json().catch(function(){ return null; }).then(function(body){
           throw new Error((body && body.error && body.error.message) || ('GSC-API-Fehler ' + res.status));
@@ -1821,11 +1846,23 @@
       gscSites = all.filter(function(s){ return s.permissionLevel && s.permissionLevel !== 'siteUnverifiedUser'; });
       if (!gscSites.length) gscSites = all;
       if (!gscSites.length){ gscSetStatus('Für dieses Google-Konto sind keine Search-Console-Properties hinterlegt.', true); return; }
-      var sel = document.getElementById('gsc-site-select');
-      sel.innerHTML = gscSites.map(function(s){ return '<option value="'+s.siteUrl.replace(/"/g,'&quot;')+'">'+gscPrettySite(s.siteUrl)+'</option>'; }).join('');
+      gscSiteMap = {};
+      gscSites.forEach(function(s){
+        var label = gscPrettySite(s.siteUrl);
+        // bei doppelten Labels (selten) eindeutig machen
+        if (gscSiteMap.hasOwnProperty(label)) label = label + ' (' + s.siteUrl + ')';
+        gscSiteMap[label] = s.siteUrl;
+      });
+      var list = document.getElementById('gsc-site-list');
+      list.innerHTML = Object.keys(gscSiteMap).sort().map(function(label){
+        return '<option value="'+label.replace(/"/g,'&quot;')+'"></option>';
+      }).join('');
+      var searchInput = document.getElementById('gsc-site-search');
+      searchInput.value = '';
+      gscSelectedSiteUrl = null;
       document.getElementById('btn-gsc-login').hidden = true;
       document.getElementById('gsc-picker').hidden = false;
-      gscSetStatus('Angemeldet. Property und Zeitraum wählen, dann Bericht laden.');
+      gscSetStatus('Angemeldet. Property tippen/auswählen, Zeitraum wählen, dann Bericht laden.');
     }).catch(function(err){ gscSetStatus(err.message, true); });
   }
 
@@ -1878,10 +1915,15 @@
     gscSetStatus('Google-Login wird geöffnet …');
     gscEnsureTokenClient(gscListSites);
   });
+  document.getElementById('gsc-site-search').addEventListener('input', function(e){
+    var v = e.target.value;
+    gscSelectedSiteUrl = gscSiteMap.hasOwnProperty(v) ? gscSiteMap[v] : null;
+  });
   document.getElementById('btn-gsc-load').addEventListener('click', function(){
-    var siteUrl = document.getElementById('gsc-site-select').value;
+    var siteUrl = gscSelectedSiteUrl;
     var months = +document.getElementById('gsc-range-select').value || 6;
-    if (!siteUrl || !gscAccessToken) return;
+    if (!siteUrl){ gscSetStatus('Bitte eine Property aus der Liste auswählen (Vorschläge erscheinen beim Tippen).', true); return; }
+    if (!gscAccessToken) return;
     var btn = document.getElementById('btn-gsc-load');
     btn.disabled = true;
     gscSetStatus('Lade Daten aus Search Console …');
@@ -2028,6 +2070,15 @@
   refreshProfileSelect();
   initSample();
   showSetup();
+
+  /* ---- Google-Login: gespeicherten Token wiederverwenden, falls noch gültig (keine erneute Anmeldung bei jedem Aufruf) ---- */
+  (function gscTryResumeSession(){
+    var cached = gscLoadToken();
+    if (!cached) return;
+    gscAccessToken = cached;
+    gscSetStatus('Angemeldet (gespeicherte Sitzung) – Properties werden geladen …');
+    gscListSites();
+  })();
 
   var linkSample = document.getElementById('link-sample');
   if (linkSample){
