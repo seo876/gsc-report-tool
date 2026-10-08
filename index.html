@@ -1514,7 +1514,37 @@
       p4 = "Rund "+dePct(brandShare).split(',')[0]+"&thinsp;% der Klicks entfallen auf Markenbegriffe rund um „"+brandTerm+"“, die restlichen "+dePct(1-brandShare).split(',')[0]+"&thinsp;% kommen bereits über generische, nicht-Marken-Suchanfragen – das ist der Teil der Sichtbarkeit, der aktiv erarbeitet wurde.";
     }
 
-    document.getElementById('narrative').innerHTML = '<p>'+p1+'</p><p>'+p2+'</p>'+(p3?'<p>'+p3+'</p>':'')+(p4?'<p>'+p4+'</p>':'');
+    /* ---- Hinweis auf vorübergehenden Rückgang nach einer hinterlegten Optimierung/einem Live-Gang:
+       nur wenn im Monat NACH dem Termin tatsächlich Position oder Klicks gegenüber dem Vormonat
+       nachgelassen haben – sonst kein Text, um keinen Rückgang zu erfinden, der nicht da ist. */
+    var p5 = "";
+    (function(){
+      var evs = (meta.optimizationEvents||[]).slice().sort(function(a,b){ return (a.date||'')<(b.date||'') ? -1 : 1; });
+      for (var i=0;i<evs.length;i++){
+        var ev = evs[i];
+        if (!ev.date) continue;
+        var d = new Date(ev.date+'T00:00:00');
+        var key = monthKey(d.getFullYear(), d.getMonth());
+        var idx = -1;
+        for (var j=0;j<monthlyBuckets.length;j++){ if (monthlyBuckets[j].key===key){ idx=j; break; } }
+        if (idx<0 || idx+1>=monthlyBuckets.length) continue; // Folgemonat liegt außerhalb des Zeitraums oder fehlt noch
+        var before = monthlyBuckets[idx], after = monthlyBuckets[idx+1];
+        if (!after.isFull) continue; // Folgemonat noch unvollständig – noch kein belastbarer Vergleich möglich
+        var posWorse = after.pos - before.pos; // positiv = Position schlechter geworden (Zahl größer)
+        var clicksDropPct = before.clicks ? (before.clicks-after.clicks)/before.clicks : 0;
+        var posIsWorse = posWorse > 0.3;
+        var clicksAreDown = clicksDropPct > 0.05;
+        if (!posIsWorse && !clicksAreDown) continue;
+        var evLabel = ev.label ? ('„'+ev.label+'“') : 'der Veröffentlichung';
+        var parts = [];
+        if (posIsWorse) parts.push("die durchschnittliche Position von "+dePos(before.pos)+" auf "+dePos(after.pos)+" zurückgegangen");
+        if (clicksAreDown) parts.push("die Klicks um rund "+dePct(clicksDropPct).split(',')[0]+"&thinsp;% gesunken");
+        p5 = "Im Monat nach "+evLabel+" ("+pad2(d.getDate())+"."+pad2(d.getMonth()+1)+"."+d.getFullYear()+") sind "+parts.join(" und ")+" – das ist nach größeren Änderungen an der Website normal: Google muss die überarbeiteten Inhalte zunächst neu crawlen und indexieren, bevor sich die Platzierungen wieder stabilisieren oder verbessern.";
+        break; // nur den ersten erkannten Fall nennen, um den Text nicht zu überladen
+      }
+    })();
+
+    document.getElementById('narrative').innerHTML = '<p>'+p1+'</p><p>'+p2+'</p>'+(p3?'<p>'+p3+'</p>':'')+(p4?'<p>'+p4+'</p>':'')+(p5?'<p>'+p5+'</p>':'');
 
     /* ---- KPI tiles (Dashboard-Kachelraster: Status-Kacheln + Vergleichs-Kacheln) ---- */
     var ICON_SEARCH = '<svg class="kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>';
