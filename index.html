@@ -302,6 +302,13 @@
   .kw-chip small{font-family:"Roboto Mono",monospace; opacity:.8;}
   .kw-chip small[data-domain-del]{opacity:1; padding-left:2px;}
 
+  .opt-event-row{display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:12.5px; padding:8px 0; border-bottom:1px dashed var(--border);}
+  .opt-event-row:last-child{border-bottom:none;}
+  .opt-event-row .oe-date{font-family:"Roboto Mono",monospace; color:var(--ink-1); font-weight:500; flex:none;}
+  .opt-event-row .oe-label{color:var(--ink-2); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .combo-marker-line{stroke:var(--ink-3); stroke-width:1.3; stroke-dasharray:4 3; opacity:.75;}
+  .combo-marker-label{fill:var(--ink-2); font-size:8.5px; font-family:"Roboto",sans-serif;}
+
   .trend{display:inline-flex; align-items:center; gap:3px; font-family:"Roboto Mono",monospace; font-size:11.5px; font-weight:500;}
   .trend.up{color:var(--good);} .trend.down{color:var(--critical);} .trend.flat{color:var(--ink-3);}
   .trend svg{width:11px;height:11px;}
@@ -344,7 +351,7 @@
   @media print{
     @page{ margin-top:15mm; }
     body{background:#fff;}
-    .sidenav,.welcome-bar-actions,.banner,.tabbar,.compare-row,#btn-add-compare,#view-setup,#round-add-form,#btn-suggest-update,#f-domain-add,#btn-domain-add{display:none!important;}
+    .sidenav,.welcome-bar-actions,.banner,.tabbar,.compare-row,#btn-add-compare,#view-setup,#round-add-form,#btn-suggest-update,#f-domain-add,#btn-domain-add,#opt-event-add-form,[data-opt-event-del]{display:none!important;}
     .app-shell{display:block;}
     .main-col{width:100%;}
     .welcome-bar{position:static; background:#fff!important; color:var(--ink-1)!important; padding:0 0 8px; border-bottom:1px solid var(--border);}
@@ -559,6 +566,24 @@
       <p class="table-note" style="margin-top:-6px;">Tatsächliche Klicks, Impressionen, CTR und durchschnittliche Position je Kalendermonat – ohne Hochrechnung. Linien lassen sich über die Kacheln oben ein- und ausblenden.</p>
       <div id="chart-grid-monthly"></div>
       <div id="trend-monthly-provisional"></div>
+      <div class="card" style="margin-top:14px;">
+        <h3>Optimierungen &amp; Live-Gänge</h3>
+        <p class="table-note">Hinterlegte Termine erscheinen als Markierung im Diagramm oben – hilfreich, um einen kurzen Einbruch nach einem Relaunch oder einer größeren Optimierung einzuordnen. Wird im Kundenprofil gespeichert.</p>
+        <div id="opt-events-list"></div>
+        <div id="opt-event-add-form" style="border-top:1px solid var(--border); margin-top:10px; padding-top:14px;">
+          <div class="field-row">
+            <div>
+              <div class="field-label">Datum</div>
+              <input type="date" class="field-input" id="f-opt-event-date">
+            </div>
+            <div>
+              <div class="field-label">Bezeichnung (optional)</div>
+              <input type="text" class="field-input" id="f-opt-event-label" placeholder="z. B. Relaunch, Meta-Texte optimiert">
+            </div>
+          </div>
+          <div style="margin-top:8px;"><button class="btn small" type="button" id="btn-opt-event-add">+ Termin hinzufügen</button></div>
+        </div>
+      </div>
     </div>
 
     <div class="section" id="sec-visibility">
@@ -1076,6 +1101,30 @@
     });
   }
 
+  /* ---- Optimierungen & Live-Gänge: Termine je Kundenprofil, als Markierung im Monats-Diagramm ---- */
+  function renderOptEventsList(events){
+    var box = document.getElementById('opt-events-list');
+    if (!box) return;
+    if (!events || !events.length){ box.innerHTML = '<p class="empty-hint">Noch kein Termin hinterlegt.</p>'; return; }
+    box.innerHTML = events.slice().sort(function(a,b){ return (a.date||'')<(b.date||'') ? 1 : -1; }).map(function(ev){
+      var dp = (ev.date||'').split('-'); // ISO-String direkt zerlegen – kein Date()/Zeitzonen-Offset
+      var dLabel = dp.length===3 ? (dp[2]+'.'+dp[1]+'.'+dp[0]) : '–';
+      return '<div class="opt-event-row">'+
+        '<span class="oe-date">'+dLabel+'</span>'+
+        '<span class="oe-label">'+(ev.label||'Optimierung')+'</span>'+
+        '<button type="button" class="btn small" data-opt-event-del="'+ev.id+'" style="padding:3px 9px; font-size:11px;">Löschen</button>'+
+      '</div>';
+    }).join('');
+    Array.prototype.forEach.call(box.querySelectorAll('[data-opt-event-del]'), function(btn){
+      btn.addEventListener('click', function(){
+        if (activeIndex<0) return;
+        var id = btn.getAttribute('data-opt-event-del');
+        reports[activeIndex].meta.optimizationEvents = (reports[activeIndex].meta.optimizationEvents||[]).filter(function(e){ return e.id!==id; });
+        renderActive();
+      });
+    });
+  }
+
   /* ---- automatischer Vorschlag für Region & Leistungen aus den Suchanfragen ----
      Da hier keine echte Unternehmensdatenbank angebunden ist, kann Region/Leistung
      nicht "gewusst" werden – stattdessen wird aus den Suchanfragen selbst geraten:
@@ -1268,7 +1317,7 @@
 
   /* ---- Kombiniertes Mehrlinien-Diagramm (GSC-Stil): alle Kennzahlen in einem Chart,
      jede Linie auf ihre eigene Min/Max-Spanne normiert, über Legenden-Kacheln ein-/ausblendbar ---- */
-  function buildComboChartHTML(metrics, series){
+  function buildComboChartHTML(metrics, series, markers){
     var n = series.length;
     function x(i){ return n>1 ? PAD.left + (i/(n-1)) * (W-PAD.left-PAD.right) : W/2; }
     var metricPts = {};
@@ -1295,11 +1344,20 @@
       '</g>';
     }).join('');
 
+    var markersHtml = (markers||[]).map(function(mk){
+      var mx = x(Math.max(0, Math.min(n-1, mk.idx)));
+      return '<g class="combo-marker">'+
+        '<line class="combo-marker-line" x1="'+mx.toFixed(1)+'" y1="'+gridTop+'" x2="'+mx.toFixed(1)+'" y2="'+gridBot+'"></line>'+
+        '<text class="combo-marker-label" x="'+mx.toFixed(1)+'" y="'+(gridTop-3)+'" text-anchor="middle">'+mk.shortLabel+'</text>'+
+      '</g>';
+    }).join('');
+
     var html = ''+
       '<div class="combo-svg-wrap">'+
         '<svg class="chart" id="'+svgId+'" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none">'+
           '<line class="gridline" x1="'+PAD.left+'" y1="'+gridTop+'" x2="'+(W-PAD.right)+'" y2="'+gridTop+'"></line>'+
           '<line class="gridline" x1="'+PAD.left+'" y1="'+gridBot+'" x2="'+(W-PAD.right)+'" y2="'+gridBot+'"></line>'+
+          markersHtml+
           linesHtml+
           '<line class="crosshair" id="cross-'+svgId+'" x1="0" y1="'+PAD.top+'" x2="0" y2="'+gridBot+'"></line>'+
           '<text class="x-label" x="'+x(0)+'" y="'+(H-6)+'" text-anchor="start">'+series[0].label+'</text>'+
@@ -1554,7 +1612,22 @@
             '<div class="cval" style="color:'+c.color+'">'+c.total+'</div>'+
           '</label>';
         }).join('');
-        var builtCombo = buildComboChartHTML(configsCombo, monthlyTrendSeries);
+        var optMarkers = [];
+        (meta.optimizationEvents||[]).forEach(function(ev){
+          if (!ev.date) return;
+          var d = new Date(ev.date+'T00:00:00');
+          var y = d.getFullYear(), m0 = d.getMonth(), day = d.getDate();
+          var key = monthKey(y, m0);
+          var idx = -1;
+          for (var i=0;i<monthlyBuckets.length;i++){ if (monthlyBuckets[i].key===key){ idx=i; break; } }
+          if (idx<0) return; // Termin liegt außerhalb des dargestellten Zeitraums
+          var frac = (day-1)/daysInMonth(y, m0+1);
+          var shortDate = pad2(day)+'.'+pad2(m0+1)+'.';
+          var lbl = ev.label ? (shortDate+' · '+ev.label) : shortDate;
+          if (lbl.length>24) lbl = lbl.slice(0,23)+'…';
+          optMarkers.push({idx: idx+frac, shortLabel: lbl});
+        });
+        var builtCombo = buildComboChartHTML(configsCombo, monthlyTrendSeries, optMarkers);
         document.getElementById('chart-grid-monthly').innerHTML =
           '<div class="combo-chart-card">'+
             '<div class="combo-legend">'+legendHtml+'</div>'+
@@ -1659,6 +1732,7 @@
     document.getElementById('f-region').value = meta.region || '';
     document.getElementById('f-services').value = (meta.services||[]).join(', ');
     renderRoundsList(queries, meta.briefingRounds || [], data.compareQueries || null);
+    renderOptEventsList(meta.optimizationEvents || []);
     renderRegionalSuggestions(queries);
     renderDomainsChips();
   }
@@ -1780,6 +1854,9 @@
           {id:'r1', label:'Erstbriefing', date:'2026-06-01', keywords:["Zahnarzt Essen","Implantologie","Kieferchirurgie","Parodontologie","Zahnersatz"]},
           {id:'r2', label:'Praxis-Unterseite /praxis/', date:'2026-08-15', keywords:["Zahnarzt Essen-Rüttenscheid","Zahnärzte Praxisteam Essen","Zahnärzte Rüttenscheider Straße","Zahnarzt moderne Praxisräume Essen","Zahnarzt Meisterlabor Essen"]}
         ],
+        optimizationEvents:[
+          {id:'oe1', date:'2026-08-12', label:'Praxis-Unterseite live'}
+        ],
         region:"Essen-Rüttenscheid", services:["Zahnarzt","Implantologie","Kieferchirurgie","Parodontologie","Zahnersatz"],
         periodStart:utcDay(2026,5,10), periodEnd:utcDay(2026,8,14), exportDate:"17.09.2026"}
     }];
@@ -1856,7 +1933,7 @@
             fileName:file.name,
             data:{mode:parsed.mode, monthlyBuckets:agg.monthlyBuckets, trendSeries:agg.trendSeries, queries:parsed.queries, devices:parsed.devices, countries:parsed.countries, pages:parsed.pages, compareTotals:null},
             meta:{website: website0, client:"", author:"SELLWERK SEO-Team", footer:"", brandTerm:null,
-              briefingRounds:[], region:guess0.region, services:guess0.services, customerDomains:[], metaTasks:[],
+              briefingRounds:[], optimizationEvents:[], region:guess0.region, services:guess0.services, customerDomains:[], metaTasks:[],
               periodStart:periodStart, periodEnd:periodEnd, exportDate: fmtDateDE(new Date())}
           });
         }catch(err){ reject(err); }
@@ -2060,7 +2137,7 @@
         fileName: 'GSC: ' + website1,
         data:{mode:'daily', monthlyBuckets:agg.monthlyBuckets, trendSeries:agg.trendSeries, queries:queries, devices:devices, countries:countries, pages:pages, compareTotals:null},
         meta:{website: website1, client:'', author:"SELLWERK SEO-Team", footer:"", brandTerm:null,
-          briefingRounds:[], region:guess1.region, services:guess1.services, customerDomains:[], metaTasks:[],
+          briefingRounds:[], optimizationEvents:[], region:guess1.region, services:guess1.services, customerDomains:[], metaTasks:[],
           periodStart:dailyRows[0].date, periodEnd:dailyRows[dailyRows.length-1].date, exportDate: fmtDateDE(new Date())}
       };
     });
@@ -2166,6 +2243,22 @@
     document.getElementById('f-round-date').value = new Date().toISOString().slice(0,10);
     renderActive();
   });
+
+  /* ---- Optimierungen & Live-Gänge ---- */
+  document.getElementById('f-opt-event-date').value = new Date().toISOString().slice(0,10);
+  document.getElementById('btn-opt-event-add').addEventListener('click', function(){
+    if (activeIndex<0) return;
+    var date = document.getElementById('f-opt-event-date').value;
+    if (!date){ alert('Bitte ein Datum eintragen.'); return; }
+    var label = document.getElementById('f-opt-event-label').value.trim();
+    var r = reports[activeIndex];
+    if (!r.meta.optimizationEvents) r.meta.optimizationEvents = [];
+    r.meta.optimizationEvents.push({id:'oe'+Date.now(), date:date, label:label});
+    document.getElementById('f-opt-event-label').value = '';
+    document.getElementById('f-opt-event-date').value = new Date().toISOString().slice(0,10);
+    renderActive();
+  });
+
   document.getElementById('btn-suggest-update').addEventListener('click', function(){
     if (activeIndex<0) return;
     renderRegionalSuggestions(reports[activeIndex].data.queries);
@@ -2197,7 +2290,7 @@
     var profiles = loadProfiles();
     var domains = r.meta.customerDomains || [];
     if (r.meta.website && domains.indexOf(r.meta.website)===-1) domains = domains.concat([r.meta.website]);
-    profiles[name] = {website:r.meta.website, client:r.meta.client, author:r.meta.author, footer:r.meta.footer, brandTerm:r.meta.brandTerm, briefingRounds:r.meta.briefingRounds, region:r.meta.region, services:r.meta.services, domains:domains};
+    profiles[name] = {website:r.meta.website, client:r.meta.client, author:r.meta.author, footer:r.meta.footer, brandTerm:r.meta.brandTerm, briefingRounds:r.meta.briefingRounds, optimizationEvents:r.meta.optimizationEvents, region:r.meta.region, services:r.meta.services, domains:domains};
     saveProfilesObj(profiles);
     refreshProfileSelect(name);
   });
@@ -2209,6 +2302,7 @@
     var r = reports[activeIndex];
     r.meta.website=p.website; r.meta.client=p.client; r.meta.author=p.author; r.meta.footer=p.footer; r.meta.brandTerm=p.brandTerm;
     r.meta.briefingRounds = p.briefingRounds || (p.briefingKeywords && p.briefingKeywords.length ? [{id:'r'+Date.now(), label:'Übernommen', date:new Date().toISOString().slice(0,10), keywords:p.briefingKeywords}] : []);
+    r.meta.optimizationEvents = p.optimizationEvents || [];
     r.meta.region=p.region||''; r.meta.services=p.services||[]; r.meta.customerDomains=p.domains||[];
     renderActive();
   });
