@@ -350,6 +350,27 @@
 
   [hidden]{display:none!important;}
 
+  /* ---------- Kunden-Export: gesperrte, nicht bearbeitbare Ansicht ---------- */
+  .client-locked #subbar,
+  .client-locked #btn-new,
+  .client-locked #btn-save-html,
+  .client-locked #btn-export-client,
+  .client-locked #view-setup,
+  .client-locked .compare-row,
+  .client-locked #btn-add-compare,
+  .client-locked #btn-remove-compare,
+  .client-locked #f-domain-add,
+  .client-locked #btn-domain-add,
+  .client-locked #opt-event-add-form,
+  .client-locked [data-opt-event-del],
+  .client-locked #round-add-form,
+  .client-locked [data-round-del],
+  .client-locked #region-services-form,
+  .client-locked #btn-suggest-update-row
+  {display:none!important;}
+  .client-locked [contenteditable]{pointer-events:none; border-bottom:none!important; background:none!important;}
+  .client-locked .sidenav-foot{display:none!important;}
+
   .print-wrap-table,.print-wrap-table>thead,.print-wrap-table>tbody,.print-wrap-table>thead>tr,.print-wrap-table>tbody>tr,.print-wrap-table>thead>tr>td,.print-wrap-table>tbody>tr>td{display:block; margin:0; padding:0; border:0; width:auto;}
   .print-logo-header{display:none;}
 
@@ -446,6 +467,10 @@
         <button class="btn small" id="btn-save-html">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
           Als HTML speichern
+        </button>
+        <button class="btn small" id="btn-export-client" title="Erzeugt eine HTML-Datei ohne Bearbeitungsmöglichkeiten – zum Versenden an den Kunden">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+          Für Kunden exportieren
         </button>
         <button class="btn small primary" id="btn-print">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-5a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1h-2M6 14h12v7H6z"/></svg>
@@ -694,7 +719,7 @@
         <div class="card">
           <h3>Empfohlene regionale Keywords</h3>
           <p class="table-note">Kombination aus Leistungen und Region nach gängigen Local-SEO-Mustern – als Content-Ideen, nicht als garantiertes Suchvolumen. Region und Leistungen werden automatisch aus den Suchanfragen geraten (kein echtes Wissen über den Kunden) – bitte kurz prüfen und bei Bedarf korrigieren.</p>
-          <div class="field-row">
+          <div class="field-row" id="region-services-form">
             <div>
               <div class="field-label">Region</div>
               <input type="text" class="field-input" id="f-region" placeholder="z. B. Essen-Rüttenscheid">
@@ -704,7 +729,7 @@
               <input type="text" class="field-input" id="f-services" placeholder="z. B. Zahnarzt, Implantologie, Zahnersatz">
             </div>
           </div>
-          <div style="margin-top:8px;"><button class="btn small" type="button" id="btn-suggest-update">Vorschläge aktualisieren</button></div>
+          <div style="margin-top:8px;" id="btn-suggest-update-row"><button class="btn small" type="button" id="btn-suggest-update">Vorschläge aktualisieren</button></div>
           <p class="table-note" id="nearby-insight" style="margin-top:14px; display:none;"></p>
           <div class="kw-chips" id="regional-suggestions"></div>
         </div>
@@ -2238,16 +2263,16 @@
   document.getElementById('btn-new').addEventListener('click', showSetup);
   document.getElementById('btn-load-own').addEventListener('click', showSetup);
   document.getElementById('btn-print').addEventListener('click', function(){ syncEditsToActive(); window.print(); });
-  document.getElementById('btn-save-html').addEventListener('click', function(){
-    syncEditsToActive();
-    /* Aktuellen Report in die gespeicherte Datei einbetten, damit sie beim Öffnen
-       direkt den Report zeigt statt des Upload-/Login-Startbildschirms. Der Datenblock
-       wird VOR dem Serialisieren als echtes Element eingehängt (kein String-Ersetzen
-       im fertigen HTML – ein "</body>" als reiner Text könnte sonst z. B. in diesem
-       Skript selbst zuerst getroffen werden und die Datei zerstören). */
+  /* Baut die aktuell aktive Auswertung als eigenständige HTML-Datei: bettet den Datenstand
+     als echtes <script>-Element VOR dem Serialisieren ein (kein String-Ersetzen im fertigen
+     HTML – ein "</body>" als reiner Text könnte sonst z. B. in diesem Skript selbst zuerst
+     getroffen werden und die Datei zerstören), damit die Datei beim Öffnen direkt den Report
+     zeigt statt des Upload-/Login-Startbildschirms. locked:true sperrt beim Öffnen zusätzlich
+     jede Eingabe- und Bearbeitungsmöglichkeit (für den Versand an den Kunden). */
+  function buildReportHtml(locked){
     var dataScriptEl = null;
     if (activeIndex>=0 && reports[activeIndex]){
-      var snapshot = {data: reports[activeIndex].data, meta: reports[activeIndex].meta};
+      var snapshot = {data: reports[activeIndex].data, meta: reports[activeIndex].meta, locked: !!locked};
       var snapshotJson = JSON.stringify(snapshot).replace(/</g, '\\u003c');
       dataScriptEl = document.createElement('script');
       dataScriptEl.type = 'application/json';
@@ -2260,12 +2285,10 @@
     }
     var html = '<!doctype html>\n' + document.documentElement.outerHTML;
     if (dataScriptEl && dataScriptEl.parentNode) dataScriptEl.parentNode.removeChild(dataScriptEl);
-    var siteName = (document.getElementById('f-website')||{}).textContent || 'report';
-    var safe = siteName.trim().replace(/[^a-z0-9.\-]+/gi, '_');
-    var today = new Date();
-    var stamp = today.getFullYear()+pad2(today.getMonth()+1)+pad2(today.getDate());
-    var filename = 'SEO-Report-'+(safe||'report')+'-'+stamp+'.html';
+    return html;
+  }
 
+  function downloadHtmlFile(html, filename){
     function browserDownload(){
       var blob = new Blob([html], {type:'text/html'});
       var url = URL.createObjectURL(blob);
@@ -2276,7 +2299,6 @@
       document.body.removeChild(a);
       setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
     }
-
     if (window.claude && typeof window.claude.use === 'function'){
       window.claude.use('downloads').then(function(downloads){
         if (!downloads) { browserDownload(); return; }
@@ -2285,6 +2307,24 @@
     } else {
       browserDownload();
     }
+  }
+
+  function reportFilename(suffix){
+    var siteName = (document.getElementById('f-website')||{}).textContent || 'report';
+    var safe = siteName.trim().replace(/[^a-z0-9.\-]+/gi, '_');
+    var today = new Date();
+    var stamp = today.getFullYear()+pad2(today.getMonth()+1)+pad2(today.getDate());
+    return 'SEO-Report-'+(safe||'report')+'-'+stamp+(suffix||'')+'.html';
+  }
+
+  document.getElementById('btn-save-html').addEventListener('click', function(){
+    syncEditsToActive();
+    downloadHtmlFile(buildReportHtml(false), reportFilename(''));
+  });
+
+  document.getElementById('btn-export-client').addEventListener('click', function(){
+    syncEditsToActive();
+    downloadHtmlFile(buildReportHtml(true), reportFilename('-Kunde'));
   });
 
   var dz = document.getElementById('dropzone');
@@ -2420,6 +2460,10 @@
       activeIndex = 0; sampleMode = false;
       renderActive();
       showReport();
+      if (saved.locked){
+        document.documentElement.classList.add('client-locked');
+        Array.prototype.forEach.call(document.querySelectorAll('[contenteditable]'), function(el){ el.contentEditable = 'false'; });
+      }
       __loadedSavedReport = true;
     }catch(e){ /* defekte/fremde Daten – auf Beispiel-Setup zurückfallen */ }
   })();
