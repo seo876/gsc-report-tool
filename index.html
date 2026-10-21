@@ -395,6 +395,12 @@
   {display:none!important;}
   .client-locked [contenteditable]{pointer-events:none; border-bottom:none!important; background:none!important;}
   .client-locked .sidenav-foot{display:none!important;}
+  .client-locked .internal-only, .client-locked .oe-status{display:none!important;}
+  @media print{ .internal-only, .oe-status{display:none!important;} }
+  .match-hint{font-size:11px; font-weight:400; color:var(--ink-3); margin-top:3px;}
+  .month-partial td{color:var(--ink-3);}
+  .month-partial small{font-size:10.5px;}
+  .sidenav-foot input[type=file]{display:none;}
 
   .print-wrap-table,.print-wrap-table>thead,.print-wrap-table>tbody,.print-wrap-table>thead>tr,.print-wrap-table>tbody>tr,.print-wrap-table>thead>tr>td,.print-wrap-table>tbody>tr>td{display:block; margin:0; padding:0; border:0; width:auto;}
   .print-logo-header{display:none;}
@@ -477,6 +483,11 @@
       <div class="sidenav-foot-row">
         <button class="btn small" id="btn-profile-save">Speichern</button>
         <button class="btn small" id="btn-profile-delete">Löschen</button>
+      </div>
+      <div class="sidenav-foot-row">
+        <button class="btn small" id="btn-profiles-export" title="Alle Kundenprofile als HTML-Datei sichern (z. B. fürs Teamlaufwerk)">Exportieren</button>
+        <button class="btn small" id="btn-profiles-import" title="Profil-Export oder gespeicherten Report (HTML) einlesen">Importieren</button>
+        <input type="file" id="profiles-import-input" accept=".html,.htm">
       </div>
     </div>
   </aside>
@@ -630,7 +641,7 @@
       <div id="trend-monthly-provisional"></div>
       <div class="card" style="margin-top:14px;">
         <h3>Optimierungen &amp; Live-Gänge</h3>
-        <p class="table-note">Hinterlegte Termine erscheinen als Markierung im Diagramm oben – hilfreich, um einen kurzen Einbruch nach einem Relaunch oder einer größeren Optimierung einzuordnen. Wird im Kundenprofil gespeichert.</p>
+        <p class="table-note">Hinterlegte Termine erscheinen als Markierung im Diagramm oben – hilfreich, um einen kurzen Einbruch nach einem Relaunch oder einer größeren Optimierung einzuordnen. <span class="internal-only">Wird im Kundenprofil gespeichert.</span></p>
         <div id="opt-events-list"></div>
         <div id="opt-event-add-form" style="border-top:1px solid var(--border); margin-top:10px; padding-top:14px;">
           <div class="field-row">
@@ -656,7 +667,7 @@
       <div class="strip">
         <div class="card">
           <h3>Sichtbarkeit nach Position</h3>
-          <p class="table-note">Anteil der Impressionen nach Positionsbereich in der Google-Suche – je mehr davon in Position 1–3, desto sichtbarer die Website.</p>
+          <p class="table-note">Anteil der Impressionen nach Positionsbereich in der Google-Suche<span class="rank-scope-note"></span> – je mehr davon in Position 1–3, desto sichtbarer die Website.</p>
           <div id="position-bands"></div>
         </div>
         <div class="card">
@@ -693,7 +704,7 @@
     <div class="section" id="sec-queries">
       <div class="section-head">
         <h2>Suchanfragen im Detail</h2>
-        <p>Die wichtigsten Suchbegriffe: was bereits gut läuft und wo noch Potenzial liegt</p>
+        <p>Die wichtigsten Suchbegriffe: was bereits gut läuft und wo noch Potenzial liegt<span class="rank-scope-note"></span></p>
       </div>
       <div class="table-grid">
         <div class="card">
@@ -718,12 +729,12 @@
     <div class="section" id="sec-keywords">
       <div class="section-head">
         <h2>Vereinbarte Keywords &amp; Empfehlungen</h2>
-        <p>Abgleich mit dem Kunden-Briefing · Ideen für neue Inhalte</p>
+        <p>Abgleich mit dem Kunden-Briefing<span class="internal-only"> · Ideen für neue Inhalte</span></p>
       </div>
       <div class="kw-stack">
         <div class="card">
           <h3>Briefing-Keywords im Vergleich</h3>
-          <p class="table-note">Mit dem Kunden abgesprochene Keywords, eingetragen in datierten Runden (z. B. pro Quartal). Ältere Runden bleiben erhalten, wenn neue dazukommen. Der Abgleich mit den Suchanfragen läuft automatisch, und die Einordnung berücksichtigt, wie lange ein Keyword schon eingetragen ist. Bei Google-Login beziehen sich Klicks, Impressionen und Position auf die letzten 28 Tage (aktueller Stand), beim Excel-Upload auf den gesamten Exportzeitraum. „Vorher (12 Mon.)“ zeigt die Ø Position in den 12 Monaten davor – „nicht sichtbar“ heißt, das Keyword hatte in dieser Zeit keine Impressionen. Keywords auf Seite 1 (Position 1–10) werden grün markiert.</p>
+          <p class="table-note">Die mit Ihnen abgestimmten Keywords und ihre aktuelle Platzierung bei Google. „Vorher“ zeigt die durchschnittliche Position in den 12 Monaten davor, „nicht sichtbar“ bedeutet: in dieser Zeit noch nicht in den Suchergebnissen. Keywords auf Seite 1 (Position 1–10) sind grün markiert.</p><p class="table-note internal-only">Intern: Keywords in datierten Runden eintragen (z. B. pro Quartal), ältere Runden bleiben erhalten. Bei Google-Login beziehen sich Klicks, Impressionen und Position auf die letzten 28 Tage, beim Excel-Upload auf den gesamten Exportzeitraum. Die Einordnung berücksichtigt, wie lange ein Keyword schon eingetragen ist.</p>
           <div id="rounds-list"></div>
           <div id="round-add-form" style="border-top:1px solid var(--border); margin-top:6px; padding-top:14px;">
             <div class="field-row">
@@ -741,7 +752,7 @@
             <div style="margin-top:8px;"><button class="btn small" type="button" id="btn-round-add">+ Runde hinzufügen</button></div>
           </div>
         </div>
-        <div class="card">
+        <div class="card internal-only">
           <h3>Empfohlene regionale Keywords</h3>
           <p class="table-note">Kombination aus Leistungen und Region nach gängigen Local-SEO-Mustern – als Content-Ideen, nicht als garantiertes Suchvolumen. Region und Leistungen werden automatisch aus den Suchanfragen geraten (kein echtes Wissen über den Kunden) – bitte kurz prüfen und bei Bedarf korrigieren.</p>
           <div class="field-row" id="region-services-form">
@@ -1082,7 +1093,7 @@
     var k = (kw||'').toLowerCase().trim();
     if (!k) return null;
     var exact = queries.find(function(q){ return q.query.toLowerCase().trim()===k; });
-    if (exact) return {clicks:exact.clicks, impr:exact.impr, pos:exact.pos, matchType:'exact'};
+    if (exact) return {clicks:exact.clicks, impr:exact.impr, pos:exact.pos, matchType:'exact', query:exact.query};
     var candidates = queries.filter(function(q){
       var ql = q.query.toLowerCase();
       return ql.indexOf(k)!==-1 || (k.length>3 && k.indexOf(ql)!==-1);
@@ -1090,7 +1101,7 @@
     if (candidates.length){
       candidates.sort(function(a,b){ return b.impr-a.impr; });
       var c = candidates[0];
-      return {clicks:c.clicks, impr:c.impr, pos:c.pos, matchType:'partial'};
+      return {clicks:c.clicks, impr:c.impr, pos:c.pos, matchType:'partial', query:c.query};
     }
     var kTokens = tokenSet(k);
     var kKeys = Object.keys(kTokens);
@@ -1102,7 +1113,7 @@
       var score = overlap/kKeys.length;
       if (score>bestScore){ bestScore=score; best=q; }
     });
-    if (best && bestScore>=0.7) return {clicks:best.clicks, impr:best.impr, pos:best.pos, matchType:'token'};
+    if (best && bestScore>=0.7) return {clicks:best.clicks, impr:best.impr, pos:best.pos, matchType:'token', query:best.query};
     return null;
   }
 
@@ -1144,7 +1155,7 @@
         var e = keywordEinordnung(m, roundDate);
         var pm = showTrend ? matchBriefingKeyword(kw, compareQueries) : null;
         var hm = history ? matchBriefingKeyword(kw, history) : null;
-        return '<tr><td class="q">'+kw+'</td><td class="num">'+(m?deNum(m.clicks):'–')+'</td><td class="num">'+(m?deNum(m.impr):'–')+'</td><td class="num">'+(m?dePos(m.pos):'–')+
+        return '<tr><td class="q">'+kw+(m && m.matchType!=='exact' ? '<div class="match-hint">ähnliche Suchanfrage: „'+m.query+'“</div>' : '')+'</td><td class="num">'+(m?deNum(m.clicks):'–')+'</td><td class="num">'+(m?deNum(m.impr):'–')+'</td><td class="num">'+(m?dePos(m.pos):'–')+
           (history ? '</td><td class="num">'+(hm?dePos(hm.pos):'<span style="color:var(--ink-3)">nicht sichtbar</span>')+'</td><td class="num">'+trendCellHTML(m,hm) : '')+
           (showTrend ? '</td><td class="num">'+trendCellHTML(m,pm) : '')+
           '</td><td class="einord"><span class="chip '+chipClassForTag(e.tag)+'"><span class="dot"></span>'+e.text+'</span></td></tr>';
@@ -1295,7 +1306,7 @@
     if (!sugg.length){ box.innerHTML = '<p class="empty-hint">Region und mindestens eine Leistung eintragen, um Vorschläge zu erzeugen.</p>'; return; }
     box.innerHTML = sugg.map(function(s){
       return s.match
-        ? '<span class="kw-chip have">'+s.keyword+' <small>· '+deNum(s.match.clicks)+' Klicks, Pos. '+dePos(s.match.pos)+'</small></span>'
+        ? '<span class="kw-chip have"'+(s.match.matchType!=='exact' ? ' title="Werte von ähnlicher Suchanfrage: '+s.match.query.replace(/"/g,'')+'"' : '')+'>'+s.keyword+(s.match.matchType!=='exact'?' ≈':'')+' <small>· '+deNum(s.match.clicks)+' Klicks, Pos. '+dePos(s.match.pos)+'</small></span>'
         : '<span class="kw-chip new">'+s.keyword+' <small>· neue Content-Idee</small></span>';
     }).join('');
   }
@@ -1513,6 +1524,8 @@
     var monthlyBuckets = data.monthlyBuckets, trendSeries = data.trendSeries;
     var queries = data.queries, devices = data.devices, countries = data.countries;
     var pages = data.pages || [];
+    var rankQ = data.queriesRecent || queries; // Ranking-Auswertungen: aktueller Stand (28 Tage), falls per Google-Login geladen
+    var rankScope = data.queriesRecent ? ' (letzte 28 Tage)' : '';
 
     var totalClicks = monthlyBuckets.reduce(function(s,b){return s+b.clicks;},0);
     var totalImpr = monthlyBuckets.reduce(function(s,b){return s+b.impr;},0);
@@ -1536,7 +1549,8 @@
     document.getElementById('kpi-period-note').textContent = "Gesamtzeitraum · "+dayCount+" Tage · Ø CTR "+dePct(overallCtr).split(',')[0]+"%";
 
     /* ---- narrative ---- */
-    var posDeltaAbs = first.pos - last.pos; // positive = improved
+    var pf = fullMonths.length>=2 ? fullMonths[0] : first, pl = fullMonths.length>=2 ? fullMonths[fullMonths.length-1] : last; // nur vollständige Monate vergleichen
+    var posDeltaAbs = pf.pos - pl.pos; // positive = improved
     var posDeltaDir = posDeltaAbs > 0.05 ? 'besser geworden' : (posDeltaAbs < -0.05 ? 'leicht zurückgegangen' : 'stabil geblieben');
     var clicksCompareLabel, clicksCompareVal;
     if (fullMonths.length>=2){
@@ -1563,14 +1577,15 @@
       posDeltaDir = posDeltaAbs > 0.05 ? 'besser geworden' : (posDeltaAbs < -0.05 ? 'leicht zurückgegangen' : 'stabil geblieben');
     }
 
-    var sp = computeStrongPotential(queries);
+    var sp = computeStrongPotential(rankQ);
+    Array.prototype.forEach.call(document.querySelectorAll('.rank-scope-note'), function(el){ el.textContent = rankScope ? ' · Positionen: letzte 28 Tage' : ''; });
     var topDevice = devices.slice().sort(function(a,b){return b.clicks-a.clicks;})[0];
     var deviceClickSum = devices.reduce(function(s,d){return s+d.clicks;},0) || totalClicks;
     var topCountry = countries.slice().sort(function(a,b){return b.clicks-a.clicks;})[0];
     var countryClickSum = countries.reduce(function(s,c){return s+c.clicks;},0) || totalClicks;
 
     var clientLabel = (meta.client && meta.client.trim()) ? meta.client.trim() : meta.website;
-    var p1 = "Im Beobachtungszeitraum ("+fmtDateDE(periodStart)+"–"+fmtDateDE(periodEnd)+") zeigt die Website von "+clientLabel+" folgenden Trend: Die durchschnittliche Position in der Google-Suche ist von "+dePos(first.pos)+" ("+first.label+") auf "+dePos(last.pos)+" ("+last.label+") "+posDeltaDir+", bei insgesamt "+deNum(totalClicks)+" Klicks und "+deNum(totalImpr)+" Impressionen.";
+    var p1 = "Im Beobachtungszeitraum ("+fmtDateDE(periodStart)+"–"+fmtDateDE(periodEnd)+") zeigt die Website von "+clientLabel+" folgenden Trend: Die durchschnittliche Position in der Google-Suche ist von "+dePos(pf.pos)+" ("+pf.label+") auf "+dePos(pl.pos)+" ("+pl.label+") "+posDeltaDir+", bei insgesamt "+deNum(totalClicks)+" Klicks und "+deNum(totalImpr)+" Impressionen.";
 
     var p2 = "Zwischen "+clicksCompareLabel+" "+(fullMonths.length>=2?"(volle Monate) ":"")+"haben sich die Klicks um "+(clicksCompareVal>=0?"rund "+dePct(Math.abs(clicksCompareVal)).split(',')[0]:"rund -"+dePct(Math.abs(clicksCompareVal)).split(',')[0])+"&thinsp;% verändert."+
       (sp.strong.length ? " Besonders stark performt „"+sp.strong[0].query+"“ (Ø Position "+dePos(sp.strong[0].pos)+(sp.strong.length>1?", gefolgt von „"+sp.strong[1].query+"“":"")+")." : "");
@@ -1633,16 +1648,17 @@
     var ICON_TREND  = '<svg class="kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 8-8"/><path d="M17 7h4v4"/></svg>';
 
     var qWithImpr = queries.filter(function(q){ return q.impr>0; });
+    var rankWithImpr = rankQ.filter(function(q){ return q.impr>0; });
     var topQuery = qWithImpr.slice().sort(function(a,b){ return b.clicks-a.clicks; })[0];
-    var bestPosQuery = qWithImpr.slice().sort(function(a,b){ return a.pos-b.pos; })[0];
-    var onPage1Count = qWithImpr.filter(function(q){ return q.pos<=10; }).length;
+    var bestPosQuery = rankWithImpr.slice().sort(function(a,b){ return a.pos-b.pos; })[0];
+    var onPage1Count = rankWithImpr.filter(function(q){ return q.pos<=10; }).length;
 
     var clicksNote = compareMode ? 'vs. Vorperiode' : clicksCompareLabel;
-    var posNote = compareMode ? 'vs. Vorperiode (niedriger = besser)' : (first.label+' → '+last.label+' (niedriger = besser)');
+    var posNote = compareMode ? 'vs. Vorperiode (niedriger = besser)' : (pf.label+' → '+pl.label+' (niedriger = besser)');
     document.getElementById('kpi-grid').innerHTML =
       '<div class="kpi">'+ICON_SEARCH+'<div class="kpi-label">Top-Suchanfrage</div><div class="kpi-value" style="font-size:19px; line-height:1.3;">'+(topQuery?topQuery.query:'–')+'</div><div class="kpi-note">'+(topQuery?deNum(topQuery.clicks)+' Klicks, Pos. '+dePos(topQuery.pos):'Keine Daten')+'</div><div class="kpi-desc">Der Suchbegriff, der die meisten Klicks auf die Website gebracht hat.</div></div>'+
-      '<div class="kpi">'+ICON_TARGET+'<div class="kpi-label">Beste Position</div><div class="kpi-value">'+(bestPosQuery?dePos(bestPosQuery.pos):'–')+'</div><div class="kpi-note">'+(bestPosQuery?'„'+bestPosQuery.query+'"':'Keine Daten')+'</div><div class="kpi-desc">Der Suchbegriff mit dem besten Google-Ranking im Zeitraum.</div></div>'+
-      '<div class="kpi">'+ICON_PAGE+'<div class="kpi-label">Keywords auf Seite 1</div><div class="kpi-value">'+onPage1Count+'</div><div class="kpi-note">von '+qWithImpr.length+' erfassten Suchanfragen</div><div class="kpi-desc">Anzahl der Suchbegriffe, die es auf die erste Google-Ergebnisseite (Position 1–10) geschafft haben.</div></div>';
+      '<div class="kpi">'+ICON_TARGET+'<div class="kpi-label">Beste Position</div><div class="kpi-value">'+(bestPosQuery?dePos(bestPosQuery.pos):'–')+'</div><div class="kpi-note">'+(bestPosQuery?'„'+bestPosQuery.query+'"':'Keine Daten')+'</div><div class="kpi-desc">Der Suchbegriff mit dem besten Google-Ranking '+(rankScope ? 'aktuell (letzte 28 Tage)' : 'im Zeitraum')+'.</div></div>'+
+      '<div class="kpi">'+ICON_PAGE+'<div class="kpi-label">Keywords auf Seite 1</div><div class="kpi-value">'+onPage1Count+'</div><div class="kpi-note">von '+rankWithImpr.length+' erfassten Suchanfragen'+rankScope+'</div><div class="kpi-desc">Anzahl der Suchbegriffe, die es auf die erste Google-Ergebnisseite (Position 1–10) geschafft haben.</div></div>';
 
     /* ---- laufender Monat: aktueller Kalendermonat aus monthlyBuckets, sonst letzter erfasster Monat ---- */
     var now = new Date();
@@ -1672,7 +1688,7 @@
     if (sp.potential.length){
       nextSteps.push('<b>„'+sp.potential[0].query+'"</b> hat bereits '+deNum(sp.potential[0].impr)+' Impressionen bei Position '+dePos(sp.potential[0].pos)+' – Content/Title optimieren, um auf Seite 1 zu kommen.');
     }
-    var ctrOppPreview = computeCtrOpportunities(queries);
+    var ctrOppPreview = computeCtrOpportunities(rankQ);
     if (ctrOppPreview.length){
       nextSteps.push('CTR-Chance bei <b>„'+ctrOppPreview[0].query+'"</b>: Klickrate liegt deutlich unter dem für Position '+dePos(ctrOppPreview[0].pos)+' üblichen Wert – Title/Meta-Description prüfen.');
     }
@@ -1682,7 +1698,7 @@
       var rd = round.date ? new Date(round.date+'T00:00:00') : null;
       (round.keywords||[]).forEach(function(kw){
         if (lowRoundKw) return;
-        var m = matchBriefingKeyword(kw, queries);
+        var m = matchBriefingKeyword(kw, rankQ);
         var e = keywordEinordnung(m, rd);
         if (e.tag==='low') lowRoundKw = kw;
       });
@@ -1712,8 +1728,9 @@
     if (secMonthlyTrend){
       if (monthlyBuckets.length>=2){
         secMonthlyTrend.hidden = false;
-        document.getElementById('trend-monthly-note').textContent = monthlyBuckets.length+' Monate';
-        var monthlyTrendSeries = monthlyBuckets.map(function(b){
+        document.getElementById('trend-monthly-note').textContent = (fullMonths.length>=2 ? fullMonths.length+' vollständige Monate' : monthlyBuckets.length+' Monate');
+        var chartBuckets = fullMonths.length>=2 ? fullMonths : monthlyBuckets; // angeschnittene Monate nicht als Einbruch zeigen
+        var monthlyTrendSeries = chartBuckets.map(function(b){
           return {label:b.label, clicks:b.clicks, impr:b.impr, ctr:(b.impr?b.clicks/b.impr:0), pos:b.pos, partial:false};
         });
         var configsCombo = [
@@ -1736,7 +1753,7 @@
           var y = d.getFullYear(), m0 = d.getMonth(), day = d.getDate();
           var key = monthKey(y, m0);
           var idx = -1;
-          for (var i=0;i<monthlyBuckets.length;i++){ if (monthlyBuckets[i].key===key){ idx=i; break; } }
+          for (var i=0;i<chartBuckets.length;i++){ if (chartBuckets[i].key===key){ idx=i; break; } }
           if (idx<0) return; // Termin liegt außerhalb des dargestellten Zeitraums
           var frac = (day-1)/daysInMonth(y, m0+1);
           var shortDate = pad2(day)+'.'+pad2(m0+1)+'.';
@@ -1791,7 +1808,7 @@
 
     /* ---- month table ---- */
     document.getElementById('month-table-body').innerHTML = monthlyBuckets.map(function(b){
-      return '<tr><td>'+b.label+(b.isFull?'':'*')+'</td><td class="num">'+deNum(b.clicks)+'</td><td class="num">'+deNum(b.impr)+'</td><td class="num">'+dePos(b.pos)+'</td></tr>';
+      return '<tr'+(b.isFull?'':' class="month-partial"')+'><td>'+b.label+(b.isFull?'':'* <small>('+b.days+' Tage)</small>')+'</td><td class="num">'+deNum(b.clicks)+'</td><td class="num">'+deNum(b.impr)+'</td><td class="num">'+dePos(b.pos)+'</td></tr>';
     }).join('');
     document.getElementById('month-footnote').style.display = monthlyBuckets.some(function(b){return !b.isFull;}) ? '' : 'none';
 
@@ -1816,7 +1833,7 @@
     document.getElementById('potential-table-body').innerHTML = sp.potential.length ? sp.potential.map(qRow).join('') : '<tr><td colspan="4" class="empty-hint">Keine offensichtlichen Potenzial-Keywords gefunden.</td></tr>';
 
     /* ---- position bands ---- */
-    var bands = computePositionBands(queries);
+    var bands = computePositionBands(rankQ);
     document.getElementById('position-bands').innerHTML = bands.map(function(b){
       return '<div class="band-row"><span class="lbl">'+b.label+'</span><span class="bar-track"><span class="bar-fill" style="width:'+Math.max(2,b.pct*100).toFixed(1)+'%; background:'+b.color+';"></span></span><span class="val">'+dePct(b.pct).split(',')[0]+'&thinsp;%</span></div>';
     }).join('');
@@ -1839,7 +1856,7 @@
     }).join('') : '<tr><td colspan="4" class="empty-hint">Kein Seiten-Reiter im Export gefunden.</td></tr>';
 
     /* ---- CTR opportunities ---- */
-    var ctrOpp = computeCtrOpportunities(queries);
+    var ctrOpp = computeCtrOpportunities(rankQ);
     document.getElementById('ctr-table-body').innerHTML = ctrOpp.length ? ctrOpp.map(function(q){
       var actual = q.impr? q.clicks/q.impr : 0;
       return '<tr><td class="q">'+q.query+'</td><td class="num">'+dePct(actual).split(',')[0]+'&thinsp;%</td><td class="num">'+dePct(expectedCTR(q.pos)).split(',')[0]+'&thinsp;%</td><td class="num">'+dePos(q.pos)+'</td></tr>';
@@ -2475,6 +2492,71 @@
   });
 
   refreshProfileSelect();
+
+  /* ---- Kundenprofile als HTML-Datei exportieren / importieren ----
+     Export: eine lesbare HTML-Übersicht aller Profile mit eingebetteten Daten.
+     Import: liest so eine Export-Datei ODER einen über „Als HTML speichern“ gesicherten Report. */
+  function escHtml(t){ return String(t==null?'':t).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function profileFromMeta(m){
+    var domains = (m.customerDomains||[]).slice();
+    if (m.website && domains.indexOf(m.website)===-1) domains.push(m.website);
+    return {website:m.website, client:m.client, author:m.author, footer:m.footer, brandTerm:m.brandTerm, briefingRounds:m.briefingRounds||[], optimizationEvents:m.optimizationEvents||[], region:m.region||'', services:m.services||[], domains:domains};
+  }
+  document.getElementById('btn-profiles-export').addEventListener('click', function(){
+    var profiles = loadProfiles();
+    var names = Object.keys(profiles).sort();
+    if (!names.length){ alert('Es sind noch keine Kundenprofile gespeichert.'); return; }
+    var now = new Date();
+    var payload = JSON.stringify({type:'gscrg-profiles', version:1, exported:now.toISOString(), profiles:profiles}).replace(/</g,'\\u003c');
+    var rows = names.map(function(n){
+      var p = profiles[n] || {};
+      var kwCount = (p.briefingRounds||[]).reduce(function(s,r){ return s+(r.keywords||[]).length; },0);
+      return '<tr><td>'+escHtml(n)+'</td><td>'+escHtml(p.website)+'</td><td>'+escHtml(p.client)+'</td><td class="n">'+(p.briefingRounds||[]).length+'</td><td class="n">'+kwCount+'</td><td class="n">'+(p.optimizationEvents||[]).length+'</td></tr>';
+    }).join('');
+    var html = '<!doctype html>\n<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Kundenprofile – SEO-Report-Generator</title>'+
+      '<style>body{font-family:Roboto,Arial,sans-serif;margin:32px;color:#202124;background:#fff}h1{font-size:22px;font-weight:500;margin:0 0 6px}p{color:#5f6368;font-size:13px;margin:0 0 18px}table{border-collapse:collapse;width:100%;font-size:13px}th{text-align:left;font-weight:500;color:#5f6368;font-size:11px;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #dadce0;padding:8px 6px}td{border-bottom:1px solid #f1f3f4;padding:9px 6px}.n{text-align:right}</style></head><body>'+
+      '<h1>Kundenprofile</h1><p>'+names.length+' Profil(e), exportiert am '+fmtDateDE(now)+'. Diese Datei im SEO-Report-Generator unten links über „Importieren“ wieder einlesen.</p>'+
+      '<table><thead><tr><th>Profil</th><th>Website</th><th>Kunde</th><th class="n">Runden</th><th class="n">Keywords</th><th class="n">Termine</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+      '<script type="application/json" id="__gscrg_profiles__">'+payload+'<\/script></body></html>';
+    var stamp = now.getFullYear()+pad2(now.getMonth()+1)+pad2(now.getDate());
+    downloadHtmlFile(html, 'Kundenprofile-'+stamp+'.html');
+  });
+  document.getElementById('btn-profiles-import').addEventListener('click', function(){ document.getElementById('profiles-import-input').click(); });
+  document.getElementById('profiles-import-input').addEventListener('change', function(e){
+    var f = e.target.files[0]; e.target.value = '';
+    if (!f) return;
+    var reader = new FileReader();
+    reader.onload = function(ev){
+      try{
+        var doc = new DOMParser().parseFromString(ev.target.result, 'text/html');
+        var profiles = loadProfiles(), imported = [], skipped = [];
+        var addProfile = function(name, p){
+          if (!name || !p) return;
+          if (profiles[name] && !confirm('Profil „'+name+'“ gibt es schon. Überschreiben?')){ skipped.push(name); return; }
+          profiles[name] = p; imported.push(name);
+        };
+        var pEl = doc.getElementById('__gscrg_profiles__');
+        var rEl = doc.getElementById('__saved_report__');
+        if (pEl){
+          var data = JSON.parse(pEl.textContent);
+          Object.keys(data.profiles||{}).forEach(function(n){ addProfile(n, data.profiles[n]); });
+        } else if (rEl){
+          var saved = JSON.parse(rEl.textContent);
+          if (!saved.meta) throw new Error('Kein Profil im Report gefunden.');
+          var suggested = (saved.meta.client && saved.meta.client.trim()) || saved.meta.website || 'Importiertes Profil';
+          var name = prompt('Profilname für den importierten Report:', suggested);
+          if (!name) return;
+          addProfile(name, profileFromMeta(saved.meta));
+        } else {
+          throw new Error('Die Datei enthält weder einen Profil-Export noch einen gespeicherten Report.');
+        }
+        saveProfilesObj(profiles);
+        refreshProfileSelect(imported.length===1 ? imported[0] : '');
+        alert(imported.length+' Profil(e) importiert'+(skipped.length ? ', '+skipped.length+' übersprungen' : '')+'.'+(imported.length ? ' Auswahl unten links unter „Kundenprofil“.' : ''));
+      }catch(err){ alert('Import fehlgeschlagen: '+err.message); }
+    };
+    reader.readAsText(f);
+  });
 
   /* ---- Als-HTML-gespeicherte Datei: eingebetteten Report direkt anzeigen statt Generator-Startscreen ---- */
   var __loadedSavedReport = false;
