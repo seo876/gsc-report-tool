@@ -698,7 +698,7 @@
       <div class="table-grid">
         <div class="card">
           <h3>Briefing-Keywords im Vergleich</h3>
-          <p class="table-note">Mit dem Kunden abgesprochene Keywords, eingetragen in datierten Runden (z. B. pro Quartal). Ältere Runden bleiben erhalten, wenn neue dazukommen. Der Abgleich mit den Suchanfragen läuft automatisch, und die Einordnung berücksichtigt, wie lange ein Keyword schon eingetragen ist. Bei Google-Login beziehen sich Klicks, Impressionen und Position auf die letzten 28 Tage (aktueller Stand), beim Excel-Upload auf den gesamten Exportzeitraum.</p>
+          <p class="table-note">Mit dem Kunden abgesprochene Keywords, eingetragen in datierten Runden (z. B. pro Quartal). Ältere Runden bleiben erhalten, wenn neue dazukommen. Der Abgleich mit den Suchanfragen läuft automatisch, und die Einordnung berücksichtigt, wie lange ein Keyword schon eingetragen ist. Bei Google-Login beziehen sich Klicks, Impressionen und Position auf die letzten 28 Tage (aktueller Stand), beim Excel-Upload auf den gesamten Exportzeitraum. „Vorher (12 Mon.)“ zeigt die Ø Position in den 12 Monaten davor – „nicht sichtbar“ heißt, das Keyword hatte in dieser Zeit keine Impressionen. Keywords auf Seite 1 (Position 1–10) werden grün markiert.</p>
           <div id="rounds-list"></div>
           <div id="round-add-form" style="border-top:1px solid var(--border); margin-top:6px; padding-top:14px;">
             <div class="field-row">
@@ -1085,6 +1085,7 @@
   function keywordEinordnung(m, roundDate){
     var daysSince = roundDate ? Math.round((new Date()-roundDate)/86400000) : 9999;
     if (!m) return {tag:'low', text:'Kein Ranking im aktuellen Export erkennbar.'};
+    if (m.pos<=10) return {tag:'good', text:'Seite 1 (Position '+dePos(m.pos)+')'+(m.impr<10?' – bisher wenig Suchvolumen ('+deNum(m.impr)+' Impr.)':'')+'.'};
     if (m.impr<10) return {tag:'low', text:'Praktisch keine Nachfrage messbar ('+deNum(m.impr)+' Impressionen).'};
     if (m.clicks===0 && m.pos<=10){
       return daysSince<90
@@ -1107,7 +1108,7 @@
     if (delta < -0.5) return '<span class="trend down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M6 9l6 6 6-6"/></svg>'+dePos(Math.abs(delta))+'</span>';
     return '<span class="trend flat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h14"/></svg>'+dePos(Math.abs(delta))+'</span>';
   }
-  function renderRoundsList(queries, rounds, compareQueries, isRecent){
+  function renderRoundsList(queries, rounds, compareQueries, isRecent, history){
     var box = document.getElementById('rounds-list');
     if (!rounds || !rounds.length){ box.innerHTML = '<p class="empty-hint">Noch keine Keyword-Runde hinterlegt.</p>'; return; }
     var showTrend = !!(compareQueries && compareQueries.length);
@@ -1117,7 +1118,9 @@
         var m = matchBriefingKeyword(kw, queries);
         var e = keywordEinordnung(m, roundDate);
         var pm = showTrend ? matchBriefingKeyword(kw, compareQueries) : null;
+        var hm = history ? matchBriefingKeyword(kw, history) : null;
         return '<tr><td class="q">'+kw+'</td><td class="num">'+(m?deNum(m.clicks):'–')+'</td><td class="num">'+(m?deNum(m.impr):'–')+'</td><td class="num">'+(m?dePos(m.pos):'–')+
+          (history ? '</td><td class="num">'+(hm?dePos(hm.pos):'<span style="color:var(--ink-3)">nicht sichtbar</span>')+'</td><td class="num">'+trendCellHTML(m,hm) : '')+
           (showTrend ? '</td><td class="num">'+trendCellHTML(m,pm) : '')+
           '</td><td><span class="chip '+chipClassForTag(e.tag)+'"><span class="dot"></span>'+e.text+'</span></td></tr>';
       }).join('');
@@ -1126,7 +1129,7 @@
           '<h4 style="margin:0; font-size:13px; font-weight:500;">'+(round.label||'Runde')+' <span style="color:var(--ink-3); font-weight:400;">· '+(roundDate?fmtDateDE(roundDate):'ohne Datum')+'</span></h4>'+
           '<button type="button" class="btn small" data-round-del="'+round.id+'" style="padding:3px 9px; font-size:11px;">Löschen</button>'+
         '</div>'+
-        '<table><thead><tr><th>Keyword</th><th class="num">Klicks</th><th class="num">Impr.</th><th class="num">Ø Pos.'+(isRecent?' (28 Tage)':'')+'</th>'+(showTrend?'<th class="num">Trend</th>':'')+'<th>Einordnung</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+        '<table><thead><tr><th>Keyword</th><th class="num">Klicks</th><th class="num">Impr.</th><th class="num">Ø Pos.'+(isRecent?' (28 Tage)':'')+'</th>'+(history?'<th class="num">Vorher (12 Mon.)</th><th class="num">Entw.</th>':'')+(showTrend?'<th class="num">Trend</th>':'')+'<th>Einordnung</th></tr></thead><tbody>'+rows+'</tbody></table>'+
       '</div>';
     }).join('');
     Array.prototype.forEach.call(box.querySelectorAll('[data-round-del]'), function(btn){
@@ -1820,7 +1823,7 @@
     /* ---- briefing keywords (rounds) & regional suggestions ---- */
     document.getElementById('f-region').value = meta.region || '';
     document.getElementById('f-services').value = (meta.services||[]).join(', ');
-    renderRoundsList(data.queriesRecent || queries, meta.briefingRounds || [], data.compareQueries || null, !!data.queriesRecent);
+    renderRoundsList(data.queriesRecent || queries, meta.briefingRounds || [], data.compareQueries || null, !!data.queriesRecent, data.queriesHistory || null);
     renderOptEventsList(meta.optimizationEvents || [], monthlyBuckets);
     renderRegionalSuggestions(queries);
     renderDomainsChips();
@@ -2202,16 +2205,20 @@
     var startStr = gscFmtDate(start), endStr = gscFmtDate(end);
 
     var recentStartStr = gscFmtDate(new Date(end.getTime() - 27*86400000)); // letzte 28 Tage für Briefing-Keywords
+    var historyStartStr = gscFmtDate(utcDay(end.getUTCFullYear(), end.getUTCMonth() - 12, end.getUTCDate() + 1)); // 12 Monate zurück
+    var historyEndStr = gscFmtDate(new Date(end.getTime() - 28*86400000)); // bis vor den 28-Tage-Zeitraum
     return Promise.all([
       gscQuery(siteUrl, startStr, endStr, ['date'], 25000),
       gscQuery(siteUrl, startStr, endStr, ['query'], 1000),
       gscQuery(siteUrl, startStr, endStr, ['device'], 10),
       gscQuery(siteUrl, startStr, endStr, ['country'], 50),
       gscQuery(siteUrl, startStr, endStr, ['page'], 1000),
-      gscQuery(siteUrl, recentStartStr, endStr, ['query'], 1000)
+      gscQuery(siteUrl, recentStartStr, endStr, ['query'], 25000),
+      gscQuery(siteUrl, historyStartStr, historyEndStr, ['query'], 25000)
     ]).then(function(results){
       var dateRows = results[0], queryRows = results[1], deviceRows = results[2], countryRows = results[3], pageRows = results[4], recentQueryRows = results[5];
       var queriesRecent = recentQueryRows.map(function(r){ return {query:r.keys[0], clicks:r.clicks||0, impr:r.impressions||0, pos:r.position||0}; });
+      var queriesHistory = results[6].map(function(r){ return {query:r.keys[0], clicks:r.clicks||0, impr:r.impressions||0, pos:r.position||0}; });
       if (!dateRows.length) throw new Error('Für diese Property und diesen Zeitraum liefert Search Console keine Daten.');
 
       var dailyRows = dateRows.map(function(r){ return {date: parseISODateStr(r.keys[0]), clicks:r.clicks||0, impr:r.impressions||0, pos:r.position||0}; }).filter(function(d){ return d.date; });
@@ -2227,7 +2234,7 @@
       var guess1 = guessRegionAndServices(queries, guessBrandTerm(website1));
       return {
         fileName: 'GSC: ' + website1,
-        data:{mode:'daily', monthlyBuckets:agg.monthlyBuckets, trendSeries:agg.trendSeries, queries:queries, queriesRecent:queriesRecent, devices:devices, countries:countries, pages:pages, compareTotals:null},
+        data:{mode:'daily', monthlyBuckets:agg.monthlyBuckets, trendSeries:agg.trendSeries, queries:queries, queriesRecent:queriesRecent, queriesHistory:queriesHistory, devices:devices, countries:countries, pages:pages, compareTotals:null},
         meta:{website: website1, client:'', author:"SELLWERK SEO-Team", footer:"", brandTerm:null,
           briefingRounds:[], optimizationEvents:[], region:guess1.region, services:guess1.services, customerDomains:[], metaTasks:[],
           periodStart:dailyRows[0].date, periodEnd:dailyRows[dailyRows.length-1].date, exportDate: fmtDateDE(new Date())}
