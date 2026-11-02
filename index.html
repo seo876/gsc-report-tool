@@ -399,6 +399,8 @@
   .client-locked .internal-only, .client-locked .oe-status{display:none!important;}
   .notes-card .notes-text{white-space:pre-wrap; min-height:64px; line-height:1.65; font-size:14.5px; padding:2px 0;}
   .client-locked .notes-card.is-empty{display:none!important;}
+  .has-notes #narrative{display:none!important;}
+  @media print{ .has-notes #narrative{display:none!important;} .notes-card:not(.is-empty){display:block!important;} }
   .amp{display:inline-flex; align-items:center; gap:7px; font-weight:500; font-size:12.5px; white-space:nowrap;}
   .amp i{width:10px; height:10px; border-radius:50%; display:inline-block;}
   .amp.g i{background:var(--good);} .amp.y i{background:var(--warn-dot);} .amp.r i{background:var(--critical);}
@@ -2421,7 +2423,8 @@ Implantologie"></textarea>
   document.getElementById('file-input').addEventListener('change', function(e){ handleFiles(e.target.files); e.target.value=''; });
   document.getElementById('btn-new').addEventListener('click', showSetup);
   document.getElementById('btn-load-own').addEventListener('click', showSetup);
-  document.getElementById('btn-print').addEventListener('click', function(){ syncEditsToActive(); window.print(); });
+  document.getElementById('btn-print').addEventListener('click', function(){ syncEditsToActive(); updateNotesState(); window.print(); });
+  window.addEventListener('beforeprint', function(){ syncEditsToActive(); updateNotesState(); });
   /* Baut die aktuell aktive Auswertung als eigenständige HTML-Datei: bettet den Datenstand
      als echtes <script>-Element VOR dem Serialisieren ein (kein String-Ersetzen im fertigen
      HTML – ein "</body>" als reiner Text könnte sonst z. B. in diesem Skript selbst zuerst
@@ -2458,7 +2461,8 @@ Implantologie"></textarea>
     if (!el || !card) return;
     var emp = !notesText().trim();
     card.classList.toggle('is-empty', emp);
-    var nar = document.getElementById('narrative'); if (nar) nar.style.display = emp ? '' : 'none';
+    var nar = document.getElementById('narrative'); if (nar){ nar.hidden = !emp; nar.style.display = emp ? '' : 'none'; }
+    document.documentElement.classList.toggle('has-notes', !emp);
   }
   document.getElementById('f-notes').addEventListener('input', updateNotesState);
   document.getElementById('f-notes').addEventListener('paste', function(e){
