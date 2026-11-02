@@ -399,6 +399,10 @@
   .client-locked .internal-only, .client-locked .oe-status{display:none!important;}
   .notes-card .notes-text{white-space:pre-wrap; min-height:64px; line-height:1.65; font-size:14.5px; padding:2px 0;}
   .client-locked .notes-card.is-empty{display:none!important;}
+  .amp{display:inline-flex; align-items:center; gap:7px; font-weight:500; font-size:12.5px; white-space:nowrap;}
+  .amp i{width:10px; height:10px; border-radius:50%; display:inline-block;}
+  .amp.g i{background:var(--good);} .amp.y i{background:var(--warn-dot);} .amp.r i{background:var(--critical);}
+  #sec-change td.dl{text-align:right; font-family:"Roboto Mono",monospace; white-space:nowrap;}
   .client-locked .notes-tools{display:none!important;}
   @media print{ .notes-card.is-empty, .notes-tools{display:none!important;} }
   @media print{ .internal-only, .oe-status{display:none!important;} }
@@ -617,6 +621,36 @@
     <div class="section">
       <div class="section-head"><h2>Was unsere SEO-Maßnahmen bewirkt haben</h2></div>
       <div class="card summary-card" id="narrative"><p>Im Beobachtungszeitraum (16.06.2026–31.10.2026) zeigt die Website von einfach-alfred.de folgenden Trend: Die durchschnittliche Position in der Google-Suche ist von 15,5 (Jul 26) auf 16,2 (Okt 26) leicht zurückgegangen, bei insgesamt 89 Klicks und 4.736 Impressionen.</p><p>Zwischen Jul 26 → Okt 26 (volle Monate) haben sich die Klicks um rund -16 % verändert. Besonders stark performt „containerlagerung stahnsdorf“ (Ø Position 1,8, gefolgt von „containerdienst in der nähe“).</p><p>Der wichtigste Kanal ist Computer (50 von 89 Klicks), die meisten Klicks kommen aus Deutschland (85 von 89). Gleichzeitig zeigen 6 weitere Suchanfragen bereits deutliche Sichtbarkeit bei Google, aber noch keine oder kaum Klicks – das größte kurzfristige Potenzial für die kommenden Wochen.</p><p>Rund 0 % der Klicks entfallen auf Markenbegriffe rund um „einfach“, die restlichen 100 % kommen bereits über generische, nicht-Marken-Suchanfragen – das ist der Teil der Sichtbarkeit, der aktiv erarbeitet wurde.</p></div>
+      <div class="card summary-card notes-card is-empty" id="notes-card" style="margin-top:14px;">
+        <div class="internal-only table-note" style="margin-bottom:8px;"><b>Eigener Text / KI-Einordnung</b> – sobald hier Text steht, ersetzt er den automatischen Text oben.</div>
+        <div class="notes-text" id="f-notes" contenteditable="true" data-placeholder="Hier Einordnung zur Entwicklung ergänzen – oder per Knopfdruck von der KI erstellen lassen …"></div>
+        <div class="notes-tools internal-only" style="margin-top:10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <button class="btn small primary" type="button" id="btn-notes-ai">✨ Mit KI erstellen</button>
+          <button class="btn small" type="button" id="btn-notes-auto" title="Kopiert den automatischen Text als Ausgangspunkt in das Feld">Auto-Text übernehmen</button>
+          <select class="field-input" id="notes-template" style="max-width:260px;">
+            <option value="">Textbaustein einfügen …</option>
+            <option value="zeit">Maßnahmen brauchen Zeit</option>
+            <option value="schwankung">Schwankungen einordnen</option>
+            <option value="naechste">Nächste Schritte</option>
+          </select>
+        </div>
+        <div class="notes-tools internal-only" style="margin-top:8px;">
+          <div class="field-label">Hinweis / Kundenfrage für die KI (optional)</div>
+          <textarea class="field-input" id="f-notes-hint" rows="3" style="width:100%;" placeholder="z. B. Kunde fragt: Werte unverändert zum 1. Oktober – werden die Anpassungen erst später wirksam? Anpassungen an den Unterseiten wurden im September umgesetzt."></textarea>
+          <div id="notes-ai-status" class="table-note" style="margin-top:6px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" id="sec-change" hidden>
+      <div class="section-head"><h2>Veränderung im Vergleich</h2><p id="change-note"></p></div>
+      <div class="card">
+        <table>
+          <thead><tr><th>Kennzahl</th><th class="num" id="change-h-before">Davor</th><th class="num" id="change-h-after">Jetzt</th><th class="num">Veränderung</th><th>Bewertung</th></tr></thead>
+          <tbody id="change-body"></tbody>
+        </table>
+        <p class="table-note" id="change-foot" style="margin:12px 0 0;"></p>
+      </div>
     </div>
 
     <div class="section">
@@ -644,25 +678,6 @@
       <p class="table-note" style="margin-top:-6px;">Tatsächliche Klicks, Impressionen, CTR und durchschnittliche Position je Kalendermonat – ohne Hochrechnung. Linien lassen sich über die Kacheln oben ein- und ausblenden.</p>
       <div id="chart-grid-monthly"><div class="combo-chart-card"><div class="combo-legend"><label class="combo-legend-item" data-key="clicks"><input type="checkbox" checked=""><span class="clt"><span class="cbox" style="color:var(--blue)"></span>Klicks</span><div class="cval" style="color:var(--blue)">89</div></label><label class="combo-legend-item" data-key="impr"><input type="checkbox" checked=""><span class="clt"><span class="cbox" style="color:var(--orange)"></span>Impressionen</span><div class="cval" style="color:var(--orange)">4.736</div></label><label class="combo-legend-item" data-key="ctr"><input type="checkbox" checked=""><span class="clt"><span class="cbox" style="color:#7c4dff"></span>CTR</span><div class="cval" style="color:#7c4dff">1 %</div></label><label class="combo-legend-item" data-key="pos"><input type="checkbox" checked=""><span class="clt"><span class="cbox" style="color:var(--good)"></span>Ø Position</span><div class="cval" style="color:var(--good)">15,8</div></label></div><div class="combo-svg-wrap"><svg class="chart" id="svg-combo-9edbh" viewBox="0 0 640 168" preserveAspectRatio="none"><line class="gridline" x1="8" y1="14" x2="632" y2="14"></line><line class="gridline" x1="8" y1="146" x2="632" y2="146"></line><g class="combo-line" data-key="clicks"><path class="line-path" d="M8.0,26.8 L216.0,133.2 L424.0,84.8 L632.0,65.5" stroke="var(--blue)"></path><circle class="hover-dot combo-dot" data-key="clicks" data-i="0" cx="8.0" cy="26.8" r="3.5" stroke="var(--blue)" style="opacity: 0;"></circle><circle class="hover-dot combo-dot" data-key="clicks" data-i="1" cx="216.0" cy="133.2" r="3.5" stroke="var(--blue)" style="opacity: 0;"></circle><circle class="hover-dot combo-dot" data-key="clicks" data-i="2" cx="424.0" cy="84.8" r="3.5" stroke="var(--blue)" style="opacity: 0;"></circle><circle class="hover-dot combo-dot" data-key="clicks" data-i="3" cx="632.0" cy="65.5" r="3.5" stroke="var(--blue)" style="opacity: 0;"></circle><circle class="end-dot" cx="632.0" cy="65.5" r="4" fill="var(--blue)"></circle></g><g class="combo-line" data-key="impr"><path class="line-path" d="M8.0,26.8 L216.0,91.1 L424.0,133.2 L632.0,95.1" stroke="var(--orange)"></path><circle class="hover-dot combo-dot" data-key="impr" data-i="0" cx="8.0" cy="26.8" r="3.5" stroke="var(--orange)" style="opacity: 0;"></circle><circle class="hover-dot combo-dot" data-key="impr" data-i="1" cx="216.0" cy="91.1" r="3.5" stroke="var(--orange)" style="opacity: 0;"></circle><circle class="hover-dot combo-dot" data-key="impr" data-i="2" cx="424.0" cy="133.2" r="3.5" stroke="var(--orange)" style="opacity: 0;"></circle><circle class="hover-dot combo-dot" data-key="impr" data-i="3" cx="632.0" cy="95.1" r="3.5" stroke="var(--orange)" style="opacity: 0;"></circle><circle class="end-dot" cx="632.0" cy="95.1" r="4" fill="var(--orange)"></circle></g><g class="combo-line" data-key="ctr"><path class="line-path" d="M8.0,26.8 L216.0,133.2 L424.0,63.4 L632.0,51.0" stroke="#7c4dff"></path><circle class="hover-dot combo-dot" data-key="ctr" data-i="0" cx="8.0" cy="26.8" r="3.5" stroke="#7c4dff" style="opacity: 0;"></circle><circle class="hover-dot combo-dot" data-key="ctr" data-i="1" cx="216.0" cy="133.2" r="3.5" stroke="#7c4dff" style="opacity: 0;"></circle><circle class="hover-dot combo-dot" data-key="ctr" data-i="2" cx="424.0" cy="63.4" r="3.5" stroke="#7c4dff" style="opacity: 0;"></circle><circle class="hover-dot combo-dot" data-key="ctr" data-i="3" cx="632.0" cy="51.0" r="3.5" stroke="#7c4dff" style="opacity: 0;"></circle><circle class="end-dot" cx="632.0" cy="51.0" r="4" fill="#7c4dff"></circle></g><g class="combo-line" data-key="pos"><path class="line-path" d="M8.0,93.7 L216.0,133.2 L424.0,26.8 L632.0,115.0" stroke="var(--good)"></path><circle class="hover-dot combo-dot" data-key="pos" data-i="0" cx="8.0" cy="93.7" r="3.5" stroke="var(--good)" style="opacity: 0;"></circle><circle class="hover-dot combo-dot" data-key="pos" data-i="1" cx="216.0" cy="133.2" r="3.5" stroke="var(--good)" style="opacity: 0;"></circle><circle class="hover-dot combo-dot" data-key="pos" data-i="2" cx="424.0" cy="26.8" r="3.5" stroke="var(--good)" style="opacity: 0;"></circle><circle class="hover-dot combo-dot" data-key="pos" data-i="3" cx="632.0" cy="115.0" r="3.5" stroke="var(--good)" style="opacity: 0;"></circle><circle class="end-dot" cx="632.0" cy="115.0" r="4" fill="var(--good)"></circle></g><line class="crosshair" id="cross-svg-combo-9edbh" x1="632" y1="14" x2="632" y2="146" style="opacity: 0;"></line><text class="x-label" x="8" y="162" text-anchor="start">Jul 26</text><text class="x-label" x="632" y="162" text-anchor="end">Okt 26</text></svg><div class="tooltip" id="tip-svg-combo-9edbh" style="left: 949.975px; top: 21.043px; opacity: 0;">Okt 26<br><span style="color:var(--blue)">●</span> Klicks 21<br><span style="color:var(--orange)">●</span> Impressionen 1.032<br><span style="color:#7c4dff">●</span> CTR 2 %<br><span style="color:var(--good)">●</span> Ø Position 16,2</div></div></div></div>
       <div id="trend-monthly-provisional"></div>
-      <div class="card notes-card is-empty" id="notes-card" style="margin-top:14px;">
-        <h3>Einordnung &amp; Anmerkungen des SEO-Teams</h3>
-        <div class="notes-text" id="f-notes" contenteditable="true" data-placeholder="Hier Einordnung zur Entwicklung ergänzen, z. B. warum Maßnahmen Zeit brauchen oder was als Nächstes geplant ist …"></div>
-        <div class="notes-tools internal-only" style="margin-top:10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-          <select class="field-input" id="notes-template" style="max-width:340px;">
-            <option value="">Textbaustein einfügen …</option>
-            <option value="zeit">Maßnahmen brauchen Zeit</option>
-            <option value="schwankung">Schwankungen einordnen</option>
-            <option value="naechste">Nächste Schritte</option>
-          </select>
-          <button class="btn small primary" type="button" id="btn-notes-ai">✨ Mit KI erstellen</button>
-          <span class="table-note" style="margin:0;">Erscheint im Kunden-Export nur, wenn Text eingetragen ist.</span>
-        </div>
-        <div class="notes-tools internal-only" style="margin-top:8px;">
-          <div class="field-label">Hinweis / Kundenfrage für die KI (optional)</div>
-          <textarea class="field-input" id="f-notes-hint" rows="3" style="width:100%;" placeholder="z. B. Kunde fragt: Werte unverändert zum 1. Oktober – werden die Anpassungen erst später wirksam? Anpassungen an den Unterseiten wurden im September umgesetzt."></textarea>
-          <div id="notes-ai-status" class="table-note" style="margin-top:6px;"></div>
-        </div>
-      </div>
       <div class="card" style="margin-top:14px;">
         <h3>Optimierungen &amp; Live-Gänge</h3>
         <p class="table-note">Hinterlegte Termine erscheinen als Markierung im Diagramm oben – hilfreich, um einen kurzen Einbruch nach einem Relaunch oder einer größeren Optimierung einzuordnen. <span class="internal-only">Wird im Kundenprofil gespeichert.</span></p>
@@ -1752,6 +1767,58 @@ Implantologie"></textarea>
     setDelta('d-clicks', (clicksCompareVal>=0?'+':'−')+dePct(Math.abs(clicksCompareVal)).split(',')[0]+'&thinsp;% ('+deNum(clicksBase)+' → '+deNum(clicksNow)+')', clicksCompareVal>=0.01?'up':(clicksCompareVal<=-0.01?'down':'flat'));
     setDelta('d-impr', (imprDelta>=0?'+':'−')+dePct(Math.abs(imprDelta)).split(',')[0]+'&thinsp;% pro Tag', imprDelta>=0.01?'up':(imprDelta<=-0.01?'down':'flat'));
     setDelta('d-pos', (posDeltaAbs>=0?'−':'+')+dePos(Math.abs(posDeltaAbs))+' Positionen', posDeltaAbs>=0.05?'up':(posDeltaAbs<=-0.05?'down':'flat'));
+    /* ---- Veränderung im Vergleich (Ampel) ---- */
+    try{
+      var chBefore = null, chAfter = null, chLabelB = '', chLabelA = '', chPerDay = false;
+      if (compareMode){
+        var cm = data.compareTotals, cd = Math.max(1, cm.days||1);
+        chPerDay = Math.abs(dayCount-cd)/cd > 0.05;
+        chBefore = {clicks:cm.clicks, impr:cm.impr, pos:cm.pos, days:cd};
+        chAfter = {clicks:totalClicks, impr:totalImpr, pos:weightedPos, days:dayCount};
+        chLabelB = 'Vorperiode ('+fmtDateDE(cm.periodStart)+'–'+fmtDateDE(cm.periodEnd)+')';
+        chLabelA = 'Aktuell ('+fmtDateDE(periodStart)+'–'+fmtDateDE(periodEnd)+')';
+      } else if (fullMonths.length>=2){
+        var fm0 = fullMonths[0], fm1 = fullMonths[fullMonths.length-1];
+        chBefore = {clicks:fm0.clicks, impr:fm0.impr, pos:fm0.pos, days:1};
+        chAfter = {clicks:fm1.clicks, impr:fm1.impr, pos:fm1.pos, days:1};
+        chLabelB = fm0.label; chLabelA = fm1.label;
+      }
+      var secCh = document.getElementById('sec-change');
+      if (!chBefore){ secCh.hidden = true; }
+      else {
+        var fmtN = function(v){ return chPerDay ? (Math.round(v*10)/10).toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1}) : deNum(Math.round(v)); };
+        var vb = function(o,k){ return chPerDay ? o[k]/o.days : o[k]; };
+        var ctrB = chBefore.impr ? chBefore.clicks/chBefore.impr*100 : 0, ctrA = chAfter.impr ? chAfter.clicks/chAfter.impr*100 : 0;
+        var fmt1 = function(v){ return (Math.round(v*10)/10).toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1}); };
+        var amp = function(cls, txt){ return '<span class="amp '+cls+'"><i></i>'+txt+'</span>'; };
+        var relRow = function(label, bv, av){
+          var rel = bv ? (av-bv)/bv : 0;
+          var cls = rel>=0.05?'g':(rel<=-0.05?'r':'y'), txt = rel>=0.05?'besser':(rel<=-0.05?'rückläufig':'stabil');
+          var sign = rel>=0.005?'+':(rel<=-0.005?'−':'±');
+          return {label:label, b:fmtN(bv), a:fmtN(av), d: bv ? sign+Math.abs(Math.round(rel*100))+' %' : '–', cls:cls, txt:txt};
+        };
+        var rows = [
+          relRow('Klicks'+(chPerDay?' (Ø pro Tag)':''), vb(chBefore,'clicks'), vb(chAfter,'clicks')),
+          relRow('Impressionen'+(chPerDay?' (Ø pro Tag)':''), vb(chBefore,'impr'), vb(chAfter,'impr'))
+        ];
+        var dc = ctrA-ctrB;
+        rows.push({label:'Klickrate (CTR)', b:fmt1(ctrB)+' %', a:fmt1(ctrA)+' %', d:(dc>=0.05?'+':(dc<=-0.05?'−':'±'))+fmt1(Math.abs(dc))+' Pkt.', cls:dc>=0.2?'g':(dc<=-0.2?'r':'y'), txt:dc>=0.2?'besser':(dc<=-0.2?'rückläufig':'stabil')});
+        var dp = chBefore.pos-chAfter.pos; // positiv = besser
+        rows.push({label:'Ø Position (kleiner ist besser)', b:dePos(chBefore.pos), a:dePos(chAfter.pos), d:(dp>=0.05?'−':(dp<=-0.05?'+':'±'))+dePos(Math.abs(dp)), cls:dp>=0.3?'g':(dp<=-0.3?'r':'y'), txt:dp>=0.3?'besser':(dp<=-0.3?'rückläufig':'stabil')});
+        document.getElementById('change-h-before').textContent = chLabelB;
+        document.getElementById('change-h-after').textContent = chLabelA;
+        document.getElementById('change-note').textContent = compareMode ? 'Vorperiode vs. aktueller Zeitraum' : 'Erster vs. letzter voller Monat';
+        document.getElementById('change-body').innerHTML = rows.map(function(r){
+          return '<tr><td>'+r.label+'</td><td class="num">'+r.b+'</td><td class="num">'+r.a+'</td><td class="dl">'+r.d+'</td><td>'+amp(r.cls,r.txt)+'</td></tr>';
+        }).join('');
+        document.getElementById('change-foot').textContent = (chPerDay ? 'Die Zeiträume sind unterschiedlich lang, daher werden Klicks und Impressionen als Durchschnitt pro Tag verglichen. ' : '') + 'Ampel: grün = deutlich besser, gelb = weitgehend stabil, rot = rückläufig (Schwellen: ±5 % bei Klicks/Impressionen, ±0,2 Prozentpunkte bei der CTR, ±0,3 Positionen).';
+        secCh.hidden = false;
+        if (reports[activeIndex] && reports[activeIndex].aiCtx){
+          reports[activeIndex].aiCtx.comparison = {basis: compareMode?'Vorperiode vs. aktueller Zeitraum':'erster vs. letzter voller Monat', before:chLabelB, after:chLabelA, perDay:chPerDay,
+            rows: rows.map(function(r){ return {metric:r.label, before:r.b, after:r.a, change:r.d, rating:r.txt}; })};
+        }
+      }
+    }catch(err){ /* Vergleich optional */ }
 
     if (compareTag){
       compareTag.innerHTML = compareMode
@@ -2389,13 +2456,21 @@ Implantologie"></textarea>
   function updateNotesState(){
     var el = document.getElementById('f-notes'), card = document.getElementById('notes-card');
     if (!el || !card) return;
-    card.classList.toggle('is-empty', !notesText().trim());
+    var emp = !notesText().trim();
+    card.classList.toggle('is-empty', emp);
+    var nar = document.getElementById('narrative'); if (nar) nar.style.display = emp ? '' : 'none';
   }
   document.getElementById('f-notes').addEventListener('input', updateNotesState);
   document.getElementById('f-notes').addEventListener('paste', function(e){
     e.preventDefault();
     var t = (e.clipboardData || window.clipboardData).getData('text/plain');
     document.execCommand('insertText', false, t);
+  });
+  document.getElementById('btn-notes-auto').addEventListener('click', function(){
+    var nar = document.getElementById('narrative');
+    var t = Array.prototype.map.call(nar.querySelectorAll('p'), function(p){ return p.textContent.trim(); }).join('\n\n');
+    if (!t) return;
+    document.getElementById('f-notes').textContent = t; updateNotesState();
   });
   document.getElementById('notes-template').addEventListener('change', function(e){
     var k = e.target.value; e.target.value = '';
