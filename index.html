@@ -654,7 +654,13 @@
             <option value="schwankung">Schwankungen einordnen</option>
             <option value="naechste">Nächste Schritte</option>
           </select>
+          <button class="btn small primary" type="button" id="btn-notes-ai">✨ Mit KI erstellen</button>
           <span class="table-note" style="margin:0;">Erscheint im Kunden-Export nur, wenn Text eingetragen ist.</span>
+        </div>
+        <div class="notes-tools internal-only" style="margin-top:8px;">
+          <div class="field-label">Hinweis / Kundenfrage für die KI (optional)</div>
+          <textarea class="field-input" id="f-notes-hint" rows="3" style="width:100%;" placeholder="z. B. Kunde fragt: Werte unverändert zum 1. Oktober – werden die Anpassungen erst später wirksam? Anpassungen an den Unterseiten wurden im September umgesetzt."></textarea>
+          <div id="notes-ai-status" class="table-note" style="margin-top:6px;"></div>
         </div>
       </div>
       <div class="card" style="margin-top:14px;">
@@ -1659,6 +1665,18 @@ Implantologie"></textarea>
     })();
 
     document.getElementById('narrative').innerHTML = '<p>'+p1+'</p><p>'+p2+'</p>'+(p3?'<p>'+p3+'</p>':'')+(p4?'<p>'+p4+'</p>':'')+(p5?'<p>'+p5+'</p>':'');
+    try{
+      var _q = function(q){ return {query:q.query, clicks:q.clicks, impressions:q.impr, position:Math.round(q.pos*10)/10}; };
+      reports[activeIndex].aiCtx = {
+        website: meta.website, client: meta.client||'', brand: meta.brandTerm||'',
+        period: fmtDateDE(periodStart)+" – "+fmtDateDE(periodEnd),
+        totals: {clicks:totalClicks, impressions:totalImpr, ctrPercent:Math.round(overallCtr*1000)/10, avgPosition:Math.round(weightedPos*10)/10},
+        months: monthlyBuckets.map(function(b){ return {month:b.label, clicks:b.clicks, impressions:b.impr, ctrPercent:b.impr?Math.round(b.clicks/b.impr*1000)/10:0, avgPosition:Math.round(b.pos*10)/10, complete:!!b.isFull}; }),
+        strongQueries: sp.strong.map(_q), potentialQueries: sp.potential.map(_q),
+        optimizations: (meta.optimizationEvents||[]).map(function(e){ return {date:e.date, label:e.label||''}; }),
+        autoSummary: document.getElementById('narrative').innerText || ''
+      };
+    }catch(e){}
 
     /* ---- KPI tiles (Dashboard-Kachelraster: Status-Kacheln + Vergleichs-Kacheln) ---- */
     var ICON_SEARCH = '<svg class="kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>';
@@ -2349,6 +2367,25 @@ Implantologie"></textarea>
     naechste: 'Nächste Schritte: Wir beobachten die Entwicklung der optimierten Seiten weiter und setzen die Maßnahmen für Suchanfragen mit hoher Sichtbarkeit, aber wenigen Klicks fort. Im nächsten Report prüfen wir, ob sich die Anpassungen in den Positionen niederschlagen.'
   };
   function notesText(){ var e=document.getElementById('f-notes'); return (typeof e.innerText==='string'?e.innerText:e.textContent)||''; }
+  var NOTES_PROXY = 'https://seo-diy.onrender.com';
+  document.getElementById('btn-notes-ai').addEventListener('click', function(){
+    var btn = this, st = document.getElementById('notes-ai-status');
+    syncEditsToActive();
+    var r = reports[activeIndex];
+    if (!r || !r.aiCtx){ st.textContent = 'Keine Auswertung geladen.'; return; }
+    var payload = JSON.parse(JSON.stringify(r.aiCtx));
+    payload.hint = document.getElementById('f-notes-hint').value.trim();
+    payload.existing = notesText().trim();
+    btn.disabled = true; st.textContent = 'KI schreibt … (beim ersten Aufruf kann der Server bis zu ca. 50 Sekunden aufwachen)';
+    fetch(NOTES_PROXY + '/generate-report-note', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)})
+      .then(function(res){ return res.json().then(function(j){ if(!res.ok) throw new Error(j.error||res.status); return j; }); })
+      .then(function(j){
+        document.getElementById('f-notes').textContent = j.text; updateNotesState();
+        st.textContent = 'Text erstellt – bitte prüfen und bei Bedarf anpassen.';
+      })
+      .catch(function(e){ st.textContent = 'Fehler: ' + e.message; })
+      .then(function(){ btn.disabled = false; });
+  });
   function updateNotesState(){
     var el = document.getElementById('f-notes'), card = document.getElementById('notes-card');
     if (!el || !card) return;
