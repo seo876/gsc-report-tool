@@ -1,11 +1,10 @@
 <!doctype html>
-<html><head><title>GSC-Report-Generator</title>
+<html lang="de"><head><meta charset="utf-8"><title>GSC-Report-Generator</title>
 <meta name="description" content="GSC-Performance-Export hochladen und automatisch einen Google-Style-SEO-Bericht als PDF erzeugen">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
 <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,500;0,700;0,900;1,400&amp;family=Roboto+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://accounts.google.com/gsi/client" async="" defer=""></script>
 <style id="print-page-margin-style"></style>
 <style>
   :root{
@@ -302,6 +301,8 @@
   .kw-chip.new{background:var(--warn-soft); color:var(--warn); border-color:transparent;}
   .kw-chip small{font-family:"Roboto Mono",monospace; opacity:.8;}
   .kw-chip small[data-domain-del]{opacity:1; padding-left:2px;}
+  .kw-del{border:none; background:none; color:var(--ink-3); cursor:pointer; font-size:15px; line-height:1; padding:0 6px 0 0; margin-right:2px;}
+  .kw-del:hover{color:var(--critical);}
 
   .opt-event-row{display:flex; align-items:flex-start; justify-content:space-between; gap:10px; font-size:12.5px; padding:8px 0; border-bottom:1px dashed var(--border);}
   .opt-event-row:last-child{border-bottom:none;}
@@ -391,6 +392,7 @@
   .client-locked [data-opt-event-del],
   .client-locked #round-add-form,
   .client-locked [data-round-del],
+  .client-locked .kw-del,
   .client-locked #region-services-form,
   .client-locked #btn-suggest-update-row
   {display:none!important;}
@@ -449,7 +451,7 @@
     .strip{grid-template-columns:1.1fr 1fr;}
     [contenteditable="true"]:empty::before{content:none;}
     .kwbox,.field-input{border:none!important; padding:0!important; background:transparent!important; resize:none!important; min-height:auto!important;}
-    [data-round-del]{display:none!important;}
+    [data-round-del], .kw-del{display:none!important;}
   }
 </style>
 
@@ -531,41 +533,7 @@
   <!-- ======================= SETUP ======================= -->
   <div id="view-setup" hidden="">
 
-    <!-- ---- primärer Einstieg: Google-Login ---- -->
-    <div class="drop" id="gsc-connect-box" style="cursor:default;">
-      <svg class="drop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-      <h2>Mit Google Search Console verbinden</h2>
-      <p>Kunde auswählen, Zeitraum festlegen – die Auswertung läuft direkt mit den Live-Daten aus Google.</p>
-      <div style="margin-top:16px;">
-        <button class="btn primary" type="button" id="btn-gsc-login" hidden="">
-          <svg viewBox="0 0 24 24" width="15" height="15"><path fill="#fff" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" opacity=".92"></path><path fill="#fff" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" opacity=".92"></path><path fill="#fff" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" opacity=".92"></path><path fill="#fff" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" opacity=".92"></path></svg>
-          Mit Google anmelden
-        </button>
-      </div>
-      <div id="gsc-picker" style="margin-top:18px; text-align:left; max-width:420px; margin-left:auto; margin-right:auto;">
-        <div class="field-row">
-          <div>
-            <div class="field-label">Kunde (Property)</div>
-            <input type="text" class="field-input" id="gsc-site-search" list="gsc-site-list" autocomplete="off" placeholder="Domain tippen zum Suchen…" style="min-width:260px;">
-            <datalist id="gsc-site-list"><option value="autohaus-noack.de"></option><option value="aydin-services-reinigungen.de (Domainproperty)"></option><option value="bayerlein-baumpflege.de (Domainproperty)"></option><option value="bestattungen-gloeggler.de"></option><option value="bestattungen-wiesner.de (Domainproperty)"></option><option value="bestattungsinstitut-heiss.de"></option><option value="bestattungsinstitut-schmid.de"></option><option value="christ-shk.de"></option><option value="con-bau.com"></option><option value="cosmetic-college-bochum-und-institut.de"></option><option value="d-s-elektrotechnik.de"></option><option value="die-pflegeengel.de"></option><option value="dpastors.de"></option><option value="dr-braunsteiner.de"></option><option value="fischer-entsorgung.de"></option><option value="fliesen-arnone.de"></option><option value="fuchs-klima.de"></option><option value="galabau-neundoerfer.de"></option><option value="geitner-gala-bau.de (Domainproperty)"></option><option value="geruesthandel-zeilinger.de"></option><option value="goldankauf-gruenstadt.de (Domainproperty)"></option><option value="goldschmiede-norys.de"></option><option value="hausverwaltung-wolfgramm.de"></option><option value="hausverwaltung-wolfgramm.de (Domainproperty)"></option><option value="hedre-fliesen.de"></option><option value="heimrich-garten-center.de"></option><option value="hohenloher-hoerakustik.de"></option><option value="holzbau-gradl.de"></option><option value="implantologie-weisendorf.de"></option><option value="jensgrieser.de"></option><option value="kaercher-center-sessler.de (Domainproperty)"></option><option value="kretschmann-naturstein.de"></option><option value="lackservice-lehmann.de"></option><option value="metallbau-vanlipzig.de"></option><option value="meyer-landschaftsbau.de"></option><option value="mvz-mainfranken.de"></option><option value="mvz-mainfranken.de (Domainproperty)"></option><option value="notarweiss.de"></option><option value="omnibus-rabenstein.de"></option><option value="physio-peuser.de (Domainproperty)"></option><option value="physiopraxis-schmerzfrei.de"></option><option value="praxis-zucchet.de"></option><option value="ra-perlak.de"></option><option value="rechtsanwalt-sack.de (Domainproperty)"></option><option value="reifen-auto-wolf.de"></option><option value="rockyourhair.de"></option><option value="schaile.de"></option><option value="scherb-systeme.de"></option><option value="seniopartner.de"></option><option value="sh-flechsig.de"></option><option value="sigat.de (Domainproperty)"></option><option value="sitzmann.de"></option><option value="stb-kotthaus.de"></option><option value="steger-haustechnik.de"></option><option value="stoll-fenstertechnik.de"></option><option value="woodever.de"></option><option value="www.aacotec.de"></option><option value="www.aesculap-apotheke-hof.de"></option><option value="www.antennentechnik-misch.de"></option><option value="www.anwalt-beier.de"></option><option value="www.anwalt-rahner.de"></option><option value="www.ap-geruestbau.de"></option><option value="www.apoamkor.de"></option><option value="www.apocelle.de"></option><option value="www.apotheke-oelsnitz.de"></option><option value="www.arzt-flora1.de"></option><option value="www.augenoptik-seifert.de"></option><option value="www.autohaus-hofmann-kressberg.de"></option><option value="www.aydin-services-reinigungen.de"></option><option value="www.bachmann-elsenfeld.de"></option><option value="www.bau-in-holz.de"></option><option value="www.baumaschinenverleih-zwickau.de"></option><option value="www.berisha-brandschutz.de"></option><option value="www.bestattung-paulgruber.de"></option><option value="www.bestattung-schmid.com"></option><option value="www.bestattungen-probst.de"></option><option value="www.bestattungen-roechter.de"></option><option value="www.bestattungen-wiesner.de"></option><option value="www.bestattungen-woehrle.de"></option><option value="www.bios-sbk.de"></option><option value="www.blech-und-lack.de"></option><option value="www.blumen-lehr-zirngibl.de"></option><option value="www.boehner-bayreuth.de"></option><option value="www.borkowski-umzuege.de"></option><option value="www.brand-brand.de"></option><option value="www.carat-immobilien.com"></option><option value="www.careandmehr.de"></option><option value="www.cmm-gala.de"></option><option value="www.conrad-bestattungen.de"></option><option value="www.dachdeckerei-roeder.de"></option><option value="www.dagmar-ottmueller.de"></option><option value="www.dent-hr.de"></option><option value="www.der-baederbauer.de"></option><option value="www.derlandarzt.de"></option><option value="www.dj-falk-schuhmann.de"></option><option value="www.dohrendorff.de"></option><option value="www.dr-sina-lehmann.de"></option><option value="www.einfach-alfred.de"></option><option value="www.elektro-erdbories.de"></option><option value="www.energieholz-eggolsheim.de"></option><option value="www.ergo-engel.de"></option><option value="www.evg-sitec.de"></option><option value="www.experience-of-life.de"></option><option value="www.fachanwaeltin-harff-mobil.de"></option><option value="www.fahrschulcenter-aschaffenburg.de"></option><option value="www.fahrschule-happydrive.de"></option><option value="www.fink-metallbau.de"></option><option value="www.fink-plexiglas.de"></option><option value="www.fischer-oettel.de"></option><option value="www.fitworldts.de/home"></option><option value="www.flennert-innenausbau.de"></option><option value="www.fliesen-roppelt.de"></option><option value="www.friebe-autoteile.de"></option><option value="www.fuchs-klima.de"></option><option value="www.galabau-hofmann.de"></option><option value="www.gardenhotel-nuernberg.de"></option><option value="www.gartenbau-foerster.de"></option><option value="www.gerlitzelektro.de"></option><option value="www.glaserei-blech.de"></option><option value="www.glaserei-schickel.de"></option><option value="www.goldankauf-gruenstadt.de"></option><option value="www.goldschmiede-norys.de"></option><option value="www.goldschmiederammelt.de"></option><option value="www.groeters-sohn-malermeister.de"></option><option value="www.gutachten-heyden.de"></option><option value="www.gutachter-elsenfeld.de"></option><option value="www.haru-einbruchschutz.de"></option><option value="www.haus-garten-keller.de"></option><option value="www.hausarzt-grosshabersdorf.de"></option><option value="www.hawo-galabau.de"></option><option value="www.heese-nied.de"></option><option value="www.heidelmeier.de"></option><option value="www.heinz-brumma.de"></option><option value="www.herrmann-sicherheitstechnik.de"></option><option value="www.hoerbar-hoergeraete.de"></option><option value="www.hoerkens.de"></option><option value="www.holz-design-wurm.de"></option><option value="www.holz-opel.de"></option><option value="www.hs-fliesen.de"></option><option value="www.hzbadaibling.de"></option><option value="www.immoservice-obm.de"></option><option value="www.j-bauereiss.de"></option><option value="www.jaegers-muelheim.de"></option><option value="www.juwelierbonze.de"></option><option value="www.kaercher-center-sessler.de"></option><option value="www.kaercher-center-sessler.de (https://www.kaercher-center-sessler.de/)"></option><option value="www.kanzlei-wegener.de"></option><option value="www.karosseriebau-wittmann.de"></option><option value="www.katara-carwash.de"></option><option value="www.kfz-wittmann.de"></option><option value="www.kieslich-renovierungssysteme.de"></option><option value="www.kommissar-alarm.de"></option><option value="www.kretschmer-bestattungen.com"></option><option value="www.lackservice-lehmann.de"></option><option value="www.lamm-geiselwind.de"></option><option value="www.lauke-roedertal.de"></option><option value="www.leuchtenhaus-jung-meerbusch.de"></option><option value="www.logopaedie-hoepping.de"></option><option value="www.lohberger-sitech.de"></option><option value="www.maler-ottmann.de"></option><option value="www.mayarchitekten.com"></option><option value="www.metallbau-belter.com"></option><option value="www.mieder-krause.de"></option><option value="www.mockibbyfotografie.de"></option><option value="www.moos-steuerberatung.de"></option><option value="www.mvz-mainfranken.de"></option><option value="www.natur-pur-landschaftsbau.de"></option><option value="www.natursteine-heil.de"></option><option value="www.nikolai-bestattungen.de"></option><option value="www.obermeder-plameco.de"></option><option value="www.onaschgmbh.de"></option><option value="www.orthopaedie-bamberg.de"></option><option value="www.orthopaedie-bamberg.de/leistungsspektrum"></option><option value="www.pflanzenzentrum-opdehipt.de/unsere-angebote"></option><option value="www.pflegedienst-glauchau.de"></option><option value="www.pflegedienst-noetzel.de"></option><option value="www.pflegeteam-bon-vita.de"></option><option value="www.physio-peuser.de"></option><option value="www.physiotherapie-dietrich-neuss.de"></option><option value="www.physiotherapiepaulsburg.de"></option><option value="www.pleil-container.de"></option><option value="www.poolcenter-galabau-muegeln.de"></option><option value="www.potthast-sagel.de"></option><option value="www.praxis-zucchet.de"></option><option value="www.primadom-immobilien.de"></option><option value="www.psychotherapeutischepraxis-duschner.de"></option><option value="www.rae-huetter.de"></option><option value="www.rcfn-training.de"></option><option value="www.rechtsanwaelte-marienplatz.de"></option><option value="www.rechtsanwalt-boerner-chemnitz.de"></option><option value="www.rechtsanwalt-kloetzer.de"></option><option value="www.rechtsanwalt-sack.de"></option><option value="www.reifen-weigelt.de"></option><option value="www.reischboeck.de"></option><option value="www.retzak-malermeister.de"></option><option value="www.rucker-hof.de"></option><option value="www.rupprecht-heizung.de"></option><option value="www.sago-bikes.com"></option><option value="www.sanusbau.de"></option><option value="www.schaefer-geis.de"></option><option value="www.schaller-re.de"></option><option value="www.schmid-steuerberatung.de"></option><option value="www.schmuck-uhren-optik-sinzig.de"></option><option value="www.schreiner-grossmann.de"></option><option value="www.schuler-planung.de"></option><option value="www.sigat.de"></option><option value="www.solartechnik-ebbes.de/energiespeicher"></option><option value="www.sonnenschutz-kottmar.de"></option><option value="www.stb-christl.de"></option><option value="www.stbguellich.de"></option><option value="www.steger-haustechnik.de"></option><option value="www.steuerberater-riebesell.de"></option><option value="www.steuerberaterin-hurtig.de"></option><option value="www.steuerberatung-wabel.de"></option><option value="www.steuerkanzlei-distasio.de"></option><option value="www.steuerkanzlei-distasio.de/leistungen"></option><option value="www.stoecklein.info"></option><option value="www.stoess-rehau.de"></option><option value="www.taxitimmerberg.de"></option><option value="www.tierarzt-veitsbronn.de"></option><option value="www.tischlerei-schlichtenbrede.de"></option><option value="www.tischlerwerkstatt-janssen.de"></option><option value="www.tivoli-automaten.de"></option><option value="www.uhren-busch.de"></option><option value="www.ulco.de"></option><option value="www.umzugsunternehmen-henke.de"></option><option value="www.utahappe.de"></option><option value="www.vennekamp-v3.de"></option><option value="www.wagner-schreinerei.net"></option><option value="www.wb-anwaltskanzlei.de"></option><option value="www.weber-hochstein-hilden.de"></option><option value="www.welsink.de"></option><option value="www.wittmann-zahnarztpraxis.de"></option><option value="www.wk-hygiene.info"></option><option value="www.wohnenswert.de"></option><option value="www.wohnkultur-mueller.de"></option><option value="www.xn--malerbetrieb-schtze-lbc.de"></option><option value="www.zahnaerzte-am-brand.de"></option><option value="www.zahnarzt-dr-glassl.de"></option><option value="www.zahnarzt-mh.de"></option><option value="www.zahnarzt-renner.de"></option><option value="www.zahnarzt-schnirring.de"></option><option value="www.zahnarztpraxis-hockenheim.de"></option><option value="www.zimmerei-koller-velburg.de"></option><option value="zahnarzt-renner.de"></option><option value="zahnarztpraxis-kowalleck.de"></option></datalist>
-          </div>
-          <div>
-            <div class="field-label">Zeitraum</div>
-            <select class="field-input" id="gsc-range-select">
-              <option value="3">Letzte 3 Monate</option>
-              <option value="6" selected="">Letzte 6 Monate</option>
-              <option value="12">Letzte 12 Monate</option>
-              <option value="16">Letzte 16 Monate</option>
-            </select>
-          </div>
-        </div>
-        <div style="margin-top:10px;"><button class="btn primary small" type="button" id="btn-gsc-load">Auswertung starten</button></div>
-      </div>
-      <div id="gsc-status" style="margin-top:12px; font-size:12.5px; color:var(--ink-2);"></div>
-    </div>
-
-    <!-- ---- sekundärer Einstieg: Excel-Upload ---- -->
-    <div class="or" style="text-align:center; margin:18px 0;">— oder ohne Google-Login —</div>
+    <!-- ---- Einstieg: Excel-Upload ---- -->
     <div class="drop" id="dropzone">
       <svg class="drop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 16V4M12 4l-4 4M12 4l4 4"></path><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"></path></svg>
       <h2>GSC-Performance-Export hochladen</h2>
@@ -1192,12 +1160,12 @@ Implantologie"></textarea>
     var showTrend = !!(compareQueries && compareQueries.length);
     box.innerHTML = rounds.slice().sort(function(a,b){ return (a.date||'')<(b.date||'') ? -1 : 1; }).map(function(round){
       var roundDate = round.date ? new Date(round.date+'T00:00:00') : null;
-      var rows = (round.keywords||[]).map(function(kw){
+      var rows = (round.keywords||[]).map(function(kw, kwIdx){
         var m = matchBriefingKeyword(kw, queries);
         var e = keywordEinordnung(m, roundDate);
         var pm = showTrend ? matchBriefingKeyword(kw, compareQueries) : null;
         var hm = history ? matchBriefingKeyword(kw, history) : null;
-        return '<tr><td class="q">'+kw+(m && m.matchType!=='exact' ? '<div class="match-hint">ähnliche Suchanfrage: „'+m.query+'“</div>' : '')+'</td><td class="num">'+(m?deNum(m.clicks):'–')+'</td><td class="num">'+(m?deNum(m.impr):'–')+'</td><td class="num">'+(m?dePos(m.pos):'–')+
+        return '<tr><td class="q"><button type="button" class="kw-del" data-kw-del="'+round.id+'" data-kw-idx="'+kwIdx+'" title="Keyword entfernen">&times;</button>'+kw+(m && m.matchType!=='exact' ? '<div class="match-hint">ähnliche Suchanfrage: „'+m.query+'“</div>' : '')+'</td><td class="num">'+(m?deNum(m.clicks):'–')+'</td><td class="num">'+(m?deNum(m.impr):'–')+'</td><td class="num">'+(m?dePos(m.pos):'–')+
           (history ? '</td><td class="num">'+(hm?dePos(hm.pos):'<span style="color:var(--ink-3)">nicht sichtbar</span>')+'</td><td class="num">'+trendCellHTML(m,hm) : '')+
           (showTrend ? '</td><td class="num">'+trendCellHTML(m,pm) : '')+
           '</td><td class="einord"><span class="chip '+chipClassForTag(e.tag)+'"><span class="dot"></span>'+e.text+'</span></td></tr>';
@@ -1210,6 +1178,16 @@ Implantologie"></textarea>
         '<div class="kw-table-wrap"><table class="kw-table"><thead><tr><th>Keyword</th><th class="num">Klicks</th><th class="num">Impr.</th><th class="num">Ø Pos.'+(isRecent?' (28 Tage)':'')+'</th>'+(history?'<th class="num">Vorher (12 Mon.)</th><th class="num">Entw.</th>':'')+(showTrend?'<th class="num">Trend</th>':'')+'<th>Einordnung</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
       '</div>';
     }).join('');
+    Array.prototype.forEach.call(box.querySelectorAll('[data-kw-del]'), function(btn){
+      btn.addEventListener('click', function(){
+        if (activeIndex<0) return;
+        var id = btn.getAttribute('data-kw-del'), idx = +btn.getAttribute('data-kw-idx');
+        (reports[activeIndex].meta.briefingRounds||[]).forEach(function(r){
+          if (r.id===id && r.keywords) r.keywords.splice(idx, 1);
+        });
+        renderActive();
+      });
+    });
     Array.prototype.forEach.call(box.querySelectorAll('[data-round-del]'), function(btn){
       btn.addEventListener('click', function(){
         if (activeIndex<0) return;
@@ -2220,205 +2198,6 @@ Implantologie"></textarea>
     document.getElementById(id).addEventListener('blur', refreshFromEdits);
   });
 
-  /* ============================================================
-     7b. GOOGLE SEARCH CONSOLE — Live-OAuth-Login & Datenabruf
-  ============================================================ */
-  var GSC_CLIENT_ID = '1046410360925-4kq5ddhlpmcpea743v641kvlrd76fu16.apps.googleusercontent.com';
-  var GSC_SCOPE = 'https://www.googleapis.com/auth/webmasters.readonly';
-  var GSC_TOKEN_STORAGE_KEY = 'gscReportTool.token';
-  var gscTokenClient = null;
-  var gscAccessToken = null;
-  var gscSites = [];
-  var gscSiteMap = {};
-  var gscSelectedSiteUrl = null;
-
-  function gscSaveToken(token, expiresInSec){
-    try{
-      var expiresAt = Date.now() + (Math.max(0,(+expiresInSec||0)) * 1000);
-      localStorage.setItem(GSC_TOKEN_STORAGE_KEY, JSON.stringify({token:token, expiresAt:expiresAt}));
-    }catch(e){ /* localStorage evtl. nicht verfügbar – dann wird jedes Mal neu angemeldet */ }
-  }
-  function gscLoadToken(){
-    try{
-      var raw = localStorage.getItem(GSC_TOKEN_STORAGE_KEY);
-      if (!raw) return null;
-      var data = JSON.parse(raw);
-      if (!data || !data.token || !data.expiresAt) return null;
-      if (data.expiresAt - Date.now() < 60000) return null; // < 1 Min. Restlaufzeit: als abgelaufen behandeln
-      return data.token;
-    }catch(e){ return null; }
-  }
-  function gscClearToken(){
-    try{ localStorage.removeItem(GSC_TOKEN_STORAGE_KEY); }catch(e){}
-  }
-
-  function gscSetStatus(msg, isError){
-    var el = document.getElementById('gsc-status');
-    if (!el) return;
-    el.textContent = msg || '';
-    el.style.color = isError ? 'var(--critical)' : 'var(--ink-2)';
-  }
-
-  function gscEnsureTokenClient(callback){
-    if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2){
-      gscSetStatus('Google-Login-Skript konnte nicht geladen werden. Bitte Seite neu laden (und ggf. Adblocker für diese Seite deaktivieren).', true);
-      return;
-    }
-    if (!gscTokenClient){
-      gscTokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: GSC_CLIENT_ID,
-        scope: GSC_SCOPE,
-        callback: function(resp){
-          if (resp && resp.access_token){
-            gscAccessToken = resp.access_token;
-            gscSaveToken(resp.access_token, resp.expires_in);
-            callback && callback();
-          } else {
-            gscSetStatus('Anmeldung fehlgeschlagen oder abgebrochen.', true);
-          }
-        },
-        error_callback: function(err){
-          gscSetStatus('Anmeldung nicht möglich: ' + ((err && err.type) || 'unbekannter Fehler') + '. Ist dieses Google-Konto als Testnutzer freigeschaltet?', true);
-        }
-      });
-    }
-    gscTokenClient.requestAccessToken({prompt: gscAccessToken ? '' : 'consent'});
-  }
-
-  function gscApiFetch(url, opts){
-    opts = opts || {};
-    opts.headers = Object.assign({'Authorization':'Bearer '+gscAccessToken}, opts.headers||{});
-    return fetch(url, opts).then(function(res){
-      if (res.status === 401){ gscAccessToken = null; gscClearToken(); throw new Error('Sitzung abgelaufen. Bitte oben erneut mit Google anmelden.'); }
-      if (!res.ok){
-        return res.json().catch(function(){ return null; }).then(function(body){
-          throw new Error((body && body.error && body.error.message) || ('GSC-API-Fehler ' + res.status));
-        });
-      }
-      return res.json();
-    });
-  }
-
-  function gscPrettySite(siteUrl){
-    if (siteUrl.indexOf('sc-domain:') === 0) return siteUrl.replace('sc-domain:','') + ' (Domainproperty)';
-    return siteUrl.replace(/^https?:\/\//,'').replace(/\/$/,'');
-  }
-  function gscWebsiteFromSite(siteUrl){
-    if (siteUrl.indexOf('sc-domain:') === 0) return siteUrl.replace('sc-domain:','');
-    try{ return new URL(siteUrl).hostname.replace(/^www\./,''); }catch(e){ return siteUrl; }
-  }
-
-  var GSC_COUNTRY_NAMES = {deu:'Deutschland', aut:'Österreich', che:'Schweiz', usa:'USA', gbr:'Großbritannien', fra:'Frankreich', ita:'Italien', esp:'Spanien', nld:'Niederlande', pol:'Polen', bel:'Belgien', lux:'Luxemburg', dnk:'Dänemark', swe:'Schweden', nor:'Norwegen', prt:'Portugal', cze:'Tschechien'};
-  function gscCountryName(code){ code = (code||'').toLowerCase(); return GSC_COUNTRY_NAMES[code] || (code ? code.toUpperCase() : '—'); }
-  var GSC_DEVICE_NAMES = {DESKTOP:'Desktop', MOBILE:'Mobil', TABLET:'Tablet'};
-  function gscDeviceName(d){ return GSC_DEVICE_NAMES[d] || d; }
-  function gscFmtDate(d){ return d.getUTCFullYear()+'-'+pad2(d.getUTCMonth()+1)+'-'+pad2(d.getUTCDate()); }
-
-  function gscListSites(){
-    gscSetStatus('Lade Properties …');
-    gscApiFetch('https://www.googleapis.com/webmasters/v3/sites').then(function(res){
-      var all = res.siteEntry || [];
-      gscSites = all.filter(function(s){ return s.permissionLevel && s.permissionLevel !== 'siteUnverifiedUser'; });
-      if (!gscSites.length) gscSites = all;
-      if (!gscSites.length){ gscSetStatus('Für dieses Google-Konto sind keine Search-Console-Properties hinterlegt.', true); return; }
-      gscSiteMap = {};
-      gscSites.forEach(function(s){
-        var label = gscPrettySite(s.siteUrl);
-        // bei doppelten Labels (selten) eindeutig machen
-        if (gscSiteMap.hasOwnProperty(label)) label = label + ' (' + s.siteUrl + ')';
-        gscSiteMap[label] = s.siteUrl;
-      });
-      var list = document.getElementById('gsc-site-list');
-      list.innerHTML = Object.keys(gscSiteMap).sort().map(function(label){
-        return '<option value="'+label.replace(/"/g,'&quot;')+'"></option>';
-      }).join('');
-      var searchInput = document.getElementById('gsc-site-search');
-      searchInput.value = '';
-      gscSelectedSiteUrl = null;
-      document.getElementById('btn-gsc-login').hidden = true;
-      document.getElementById('gsc-picker').hidden = false;
-      gscSetStatus('Angemeldet. Property tippen/auswählen, Zeitraum wählen, dann Bericht laden.');
-    }).catch(function(err){ gscSetStatus(err.message, true); });
-  }
-
-  function gscQuery(siteUrl, startDate, endDate, dims, rowLimit){
-    var body = {startDate:startDate, endDate:endDate, dimensions:dims, rowLimit: rowLimit||25000, dataState:'all'};
-    return gscApiFetch('https://www.googleapis.com/webmasters/v3/sites/'+encodeURIComponent(siteUrl)+'/searchAnalytics/query', {
-      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
-    }).then(function(res){ return res.rows || []; });
-  }
-
-  function gscBuildReportData(siteUrl, months){
-    var today = new Date();
-    var end = utcDay(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
-    end.setUTCDate(end.getUTCDate() - 3); // Search Console hinkt der Realität ca. 2-3 Tage hinterher
-    var start = utcDay(end.getUTCFullYear(), end.getUTCMonth() - months, end.getUTCDate() + 1);
-    var startStr = gscFmtDate(start), endStr = gscFmtDate(end);
-
-    var recentStartStr = gscFmtDate(new Date(end.getTime() - 27*86400000)); // letzte 28 Tage für Briefing-Keywords
-    var historyStartStr = gscFmtDate(utcDay(end.getUTCFullYear(), end.getUTCMonth() - 12, end.getUTCDate() + 1)); // 12 Monate zurück
-    var historyEndStr = gscFmtDate(new Date(end.getTime() - 28*86400000)); // bis vor den 28-Tage-Zeitraum
-    return Promise.all([
-      gscQuery(siteUrl, startStr, endStr, ['date'], 25000),
-      gscQuery(siteUrl, startStr, endStr, ['query'], 1000),
-      gscQuery(siteUrl, startStr, endStr, ['device'], 10),
-      gscQuery(siteUrl, startStr, endStr, ['country'], 50),
-      gscQuery(siteUrl, startStr, endStr, ['page'], 1000),
-      gscQuery(siteUrl, recentStartStr, endStr, ['query'], 25000),
-      gscQuery(siteUrl, historyStartStr, historyEndStr, ['query'], 25000)
-    ]).then(function(results){
-      var dateRows = results[0], queryRows = results[1], deviceRows = results[2], countryRows = results[3], pageRows = results[4], recentQueryRows = results[5];
-      var queriesRecent = recentQueryRows.map(function(r){ return {query:r.keys[0], clicks:r.clicks||0, impr:r.impressions||0, pos:r.position||0}; });
-      var queriesHistory = results[6].map(function(r){ return {query:r.keys[0], clicks:r.clicks||0, impr:r.impressions||0, pos:r.position||0}; });
-      if (!dateRows.length) throw new Error('Für diese Property und diesen Zeitraum liefert Search Console keine Daten.');
-
-      var dailyRows = dateRows.map(function(r){ return {date: parseISODateStr(r.keys[0]), clicks:r.clicks||0, impr:r.impressions||0, pos:r.position||0}; }).filter(function(d){ return d.date; });
-      dailyRows.sort(function(a,b){ return a.date-b.date; });
-      var agg = buildFromDaily(dailyRows);
-
-      var queries = queryRows.map(function(r){ return {query:r.keys[0], clicks:r.clicks||0, impr:r.impressions||0, pos:r.position||0}; }).sort(function(a,b){ return b.clicks-a.clicks; });
-      var devices = deviceRows.map(function(r){ return {name:gscDeviceName(r.keys[0]), clicks:r.clicks||0, impr:r.impressions||0, pos:r.position||0}; }).sort(function(a,b){ return b.clicks-a.clicks; });
-      var countries = countryRows.map(function(r){ return {name:gscCountryName(r.keys[0]), clicks:r.clicks||0, impr:r.impressions||0, pos:r.position||0}; }).sort(function(a,b){ return b.clicks-a.clicks; }).slice(0,10);
-      var pages = pageRows.map(function(r){ return {url:r.keys[0], clicks:r.clicks||0, impr:r.impressions||0, pos:r.position||0}; }).sort(function(a,b){ return b.clicks-a.clicks; });
-
-      var website1 = gscWebsiteFromSite(siteUrl);
-      var guess1 = guessRegionAndServices(queries, guessBrandTerm(website1));
-      return {
-        fileName: 'GSC: ' + website1,
-        data:{mode:'daily', monthlyBuckets:agg.monthlyBuckets, trendSeries:agg.trendSeries, queries:queries, queriesRecent:queriesRecent, queriesHistory:queriesHistory, devices:devices, countries:countries, pages:pages, compareTotals:null},
-        meta:{website: website1, client:'', author:"SELLWERK SEO-Team", footer:"", brandTerm:null,
-          briefingRounds:[], optimizationEvents:[], region:guess1.region, services:guess1.services, customerDomains:[], metaTasks:[],
-          periodStart:dailyRows[0].date, periodEnd:dailyRows[dailyRows.length-1].date, exportDate: fmtDateDE(new Date())}
-      };
-    });
-  }
-
-  document.getElementById('btn-gsc-login').addEventListener('click', function(){
-    gscSetStatus('Google-Login wird geöffnet …');
-    gscEnsureTokenClient(gscListSites);
-  });
-  document.getElementById('gsc-site-search').addEventListener('input', function(e){
-    var v = e.target.value;
-    gscSelectedSiteUrl = gscSiteMap.hasOwnProperty(v) ? gscSiteMap[v] : null;
-  });
-  document.getElementById('btn-gsc-load').addEventListener('click', function(){
-    var siteUrl = gscSelectedSiteUrl;
-    var months = +document.getElementById('gsc-range-select').value || 6;
-    if (!siteUrl){ gscSetStatus('Bitte eine Property aus der Liste auswählen (Vorschläge erscheinen beim Tippen).', true); return; }
-    if (!gscAccessToken) return;
-    var btn = document.getElementById('btn-gsc-load');
-    btn.disabled = true;
-    gscSetStatus('Lade Daten aus Search Console …');
-    gscBuildReportData(siteUrl, months).then(function(r){
-      reports = [r]; activeIndex = 0; sampleMode = false;
-      renderActive();
-      showReport();
-      gscSetStatus('');
-    }).catch(function(err){
-      gscSetStatus(err.message, true);
-    }).finally(function(){ btn.disabled = false; });
-  });
-
   document.getElementById('btn-browse').addEventListener('click', function(){ document.getElementById('file-input').click(); });
   document.getElementById('file-input').addEventListener('change', function(e){ handleFiles(e.target.files); e.target.value=''; });
   document.getElementById('btn-new').addEventListener('click', showSetup);
@@ -2752,15 +2531,6 @@ Implantologie"></textarea>
     initSample();
     showSetup();
   }
-
-  /* ---- Google-Login: gespeicherten Token wiederverwenden, falls noch gültig (keine erneute Anmeldung bei jedem Aufruf) ---- */
-  (function gscTryResumeSession(){
-    var cached = gscLoadToken();
-    if (!cached) return;
-    gscAccessToken = cached;
-    gscSetStatus('Angemeldet (gespeicherte Sitzung) – Properties werden geladen …');
-    gscListSites();
-  })();
 
   var linkSample = document.getElementById('link-sample');
   if (linkSample){
