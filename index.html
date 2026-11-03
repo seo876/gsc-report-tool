@@ -404,8 +404,9 @@
   .has-notes #narrative{display:none!important;}
   @media print{ .has-notes #narrative{display:none!important;} .notes-card:not(.is-empty){display:block!important;} }
   .amp{display:inline-flex; align-items:center; gap:7px; font-weight:500; font-size:12.5px; white-space:nowrap;}
-  .amp i{width:10px; height:10px; border-radius:50%; display:inline-block;}
-  .amp.g i{background:var(--good);} .amp.y i{background:var(--warn-dot);} .amp.r i{background:var(--critical);}
+  .amp i{font-style:normal; font-size:15px; line-height:1; display:inline-block; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  .amp{-webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  .amp.g i{color:var(--good);} .amp.y i{color:var(--warn-dot);} .amp.r i{color:var(--critical);}
   #sec-change td.dl{text-align:right; font-family:"Roboto Mono",monospace; white-space:nowrap;}
   .client-locked .notes-tools{display:none!important;}
   @media print{ .notes-card.is-empty, .notes-tools{display:none!important;} }
@@ -1779,7 +1780,7 @@ Implantologie"></textarea>
         var vb = function(o,k){ return chPerDay ? o[k]/o.days : o[k]; };
         var ctrB = chBefore.impr ? chBefore.clicks/chBefore.impr*100 : 0, ctrA = chAfter.impr ? chAfter.clicks/chAfter.impr*100 : 0;
         var fmt1 = function(v){ return (Math.round(v*10)/10).toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1}); };
-        var amp = function(cls, txt){ return '<span class="amp '+cls+'"><i></i>'+txt+'</span>'; };
+        var amp = function(cls, txt){ return '<span class="amp '+cls+'"><i>&#9679;</i>'+txt+'</span>'; };
         var relRow = function(label, bv, av){
           var rel = bv ? (av-bv)/bv : 0;
           var cls = rel>=0.05?'g':(rel<=-0.05?'r':'y'), txt = rel>=0.05?'besser':(rel<=-0.05?'rückläufig':'stabil');
@@ -2528,14 +2529,22 @@ Implantologie"></textarea>
       }
       reports = [{fileName:(saved.meta && saved.meta.website) || 'Report', data:saved.data, meta:saved.meta}];
       activeIndex = 0; sampleMode = false;
-      renderActive();
-      showReport();
-      if (saved.locked){
+      /* Kunden-Export: Sperre ZUERST setzen – auch wenn beim Darstellen etwas schiefgeht, darf der Kunde nie den Generator bedienen können */
+      var applyLock = function(){
         document.documentElement.classList.add('client-locked');
         Array.prototype.forEach.call(document.querySelectorAll('[contenteditable]'), function(el){ el.contentEditable = 'false'; });
-      }
+        var vs = document.getElementById('view-setup'); if (vs) vs.hidden = true;
+      };
+      if (saved.locked) applyLock();
       __loadedSavedReport = true;
-    }catch(e){ /* defekte/fremde Daten – auf Beispiel-Setup zurückfallen */ }
+      try{
+        renderActive();
+      }catch(renderErr){
+        if (window.console) console.error('Report konnte nicht vollständig dargestellt werden:', renderErr);
+      }
+      showReport();
+      if (saved.locked) applyLock();
+    }catch(e){ if (window.console) console.error('Gespeicherter Report konnte nicht geladen werden:', e); }
   })();
   if (!__loadedSavedReport){
     initSample();
