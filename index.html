@@ -756,6 +756,8 @@
                 <input type="date" class="field-input" id="f-round-date">
               </div>
             </div>
+            <div class="field-label" style="margin-top:10px;">Ort (optional) – wird an jedes Keyword angehängt</div>
+            <input type="text" class="field-input" id="f-round-location" placeholder="z. B. Berlin" style="max-width:280px;">
             <div class="field-label" style="margin-top:10px;">Keywords (ein Keyword pro Zeile)</div>
             <textarea class="kwbox" id="f-round-keywords" rows="4" placeholder="Zahnarzt Essen
 Implantologie"></textarea>
@@ -1099,6 +1101,12 @@ Implantologie"></textarea>
     var s = {}; words.forEach(function(w){ s[w]=true; });
     return s;
   }
+  /* Keyword + Ort der Runde (z. B. „Container mieten" + „Berlin" → „Container mieten Berlin"); nichts anhängen, wenn der Ort schon drinsteht */
+  function withLocation(kw, round){
+    var loc = round && round.location ? String(round.location).trim() : '';
+    if (!loc) return kw;
+    return (kw||'').toLowerCase().indexOf(loc.toLowerCase())!==-1 ? kw : (kw+' '+loc);
+  }
   function matchBriefingKeyword(kw, queries){
     var k = (kw||'').toLowerCase().trim();
     if (!k) return null;
@@ -1161,18 +1169,19 @@ Implantologie"></textarea>
     box.innerHTML = rounds.slice().sort(function(a,b){ return (a.date||'')<(b.date||'') ? -1 : 1; }).map(function(round){
       var roundDate = round.date ? new Date(round.date+'T00:00:00') : null;
       var rows = (round.keywords||[]).map(function(kw, kwIdx){
-        var m = matchBriefingKeyword(kw, queries);
+        var kwEff = withLocation(kw, round);
+        var m = matchBriefingKeyword(kwEff, queries);
         var e = keywordEinordnung(m, roundDate);
-        var pm = showTrend ? matchBriefingKeyword(kw, compareQueries) : null;
-        var hm = history ? matchBriefingKeyword(kw, history) : null;
-        return '<tr><td class="q"><button type="button" class="kw-del" data-kw-del="'+round.id+'" data-kw-idx="'+kwIdx+'" title="Keyword entfernen">&times;</button>'+kw+(m && m.matchType!=='exact' ? '<div class="match-hint">ähnliche Suchanfrage: „'+m.query+'“</div>' : '')+'</td><td class="num">'+(m?deNum(m.clicks):'–')+'</td><td class="num">'+(m?deNum(m.impr):'–')+'</td><td class="num">'+(m?dePos(m.pos):'–')+
+        var pm = showTrend ? matchBriefingKeyword(kwEff, compareQueries) : null;
+        var hm = history ? matchBriefingKeyword(kwEff, history) : null;
+        return '<tr><td class="q"><button type="button" class="kw-del" data-kw-del="'+round.id+'" data-kw-idx="'+kwIdx+'" title="Keyword entfernen">&times;</button>'+kwEff+(m && m.matchType!=='exact' ? '<div class="match-hint">ähnliche Suchanfrage: „'+m.query+'“</div>' : '')+'</td><td class="num">'+(m?deNum(m.clicks):'–')+'</td><td class="num">'+(m?deNum(m.impr):'–')+'</td><td class="num">'+(m?dePos(m.pos):'–')+
           (history ? '</td><td class="num">'+(hm?dePos(hm.pos):'<span style="color:var(--ink-3)">nicht sichtbar</span>')+'</td><td class="num">'+trendCellHTML(m,hm) : '')+
           (showTrend ? '</td><td class="num">'+trendCellHTML(m,pm) : '')+
           '</td><td class="einord"><span class="chip '+chipClassForTag(e.tag)+'"><span class="dot"></span>'+e.text+'</span></td></tr>';
       }).join('');
       return '<div class="round-block">'+
         '<div class="round-head">'+
-          '<h4>'+(round.label||'Runde')+' <span>· '+(roundDate?fmtDateDE(roundDate):'ohne Datum')+'</span></h4>'+
+          '<h4>'+(round.label||'Runde')+' <span>· '+(roundDate?fmtDateDE(roundDate):'ohne Datum')+(round.location?' · Ort: '+round.location:'')+'</span></h4>'+
           '<button type="button" class="btn small" data-round-del="'+round.id+'" style="padding:3px 9px; font-size:11px;">Löschen</button>'+
         '</div>'+
         '<div class="kw-table-wrap"><table class="kw-table"><thead><tr><th>Keyword</th><th class="num">Klicks</th><th class="num">Impr.</th><th class="num">Ø Pos.'+(isRecent?' (28 Tage)':'')+'</th>'+(history?'<th class="num">Vorher (12 Mon.)</th><th class="num">Entw.</th>':'')+(showTrend?'<th class="num">Trend</th>':'')+'<th>Einordnung</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
@@ -1732,7 +1741,7 @@ Implantologie"></textarea>
       var rd = round.date ? new Date(round.date+'T00:00:00') : null;
       (round.keywords||[]).forEach(function(kw){
         if (lowRoundKw) return;
-        var m = matchBriefingKeyword(kw, rankQ);
+        var m = matchBriefingKeyword(withLocation(kw, round), rankQ);
         var e = keywordEinordnung(m, rd);
         if (e.tag==='low') lowRoundKw = kw;
       });
@@ -2355,7 +2364,8 @@ Implantologie"></textarea>
     if (!kws.length){ alert('Bitte mindestens ein Keyword eintragen.'); return; }
     var r = reports[activeIndex];
     if (!r.meta.briefingRounds) r.meta.briefingRounds = [];
-    r.meta.briefingRounds.push({id:'r'+Date.now(), label:label, date:date, keywords:kws});
+    r.meta.briefingRounds.push({id:'r'+Date.now(), label:label, date:date, keywords:kws, location:(document.getElementById('f-round-location').value||'').trim()});
+    document.getElementById('f-round-location').value = '';
     document.getElementById('f-round-label').value = '';
     document.getElementById('f-round-keywords').value = '';
     document.getElementById('f-round-date').value = new Date().toISOString().slice(0,10);
