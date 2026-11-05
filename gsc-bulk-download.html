@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GSC Sammel-Download</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  :root{ --ink:#1f2328; --ink2:#59636e; --line:#d8dee4; --bg:#f6f8fa; --brand:#00af9c; --warn:#b97600; --bad:#d03b3b; }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:Roboto,Segoe UI,Arial,sans-serif; color:var(--ink); background:var(--bg); line-height:1.5;}
+  .wrap{max-width:900px; margin:0 auto; padding:28px 18px 60px;}
+  h1{font-size:24px; margin:0 0 4px;}
+  p.sub{color:var(--ink2); margin:0 0 22px;}
+  .card{background:#fff; border:1px solid var(--line); border-radius:12px; padding:18px 20px; margin-bottom:16px;}
+  .card h2{font-size:15px; margin:0 0 12px;}
+  button{font:inherit; cursor:pointer; border-radius:8px; border:1px solid var(--line); background:#fff; padding:8px 14px;}
+  button.primary{background:var(--brand); border-color:var(--brand); color:#fff; font-weight:600;}
+  button:disabled{opacity:.5; cursor:default;}
+  input[type=text], select{font:inherit; padding:7px 10px; border:1px solid var(--line); border-radius:8px;}
+  .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+  .muted{color:var(--ink2); font-size:13px;}
+  #site-list{max-height:380px; overflow:auto; border:1px solid var(--line); border-radius:8px; margin-top:10px;}
+  .site{display:flex; gap:10px; align-items:center; padding:7px 12px; border-bottom:1px solid #eef1f4; font-size:14px;}
+  .site:last-child{border-bottom:none;}
+  .site small{color:var(--ink2); margin-left:auto;}
+  .site.ok small{color:var(--brand);} .site.err small{color:var(--bad);} .site.run small{color:var(--warn);}
+  #bar{height:8px; background:#e8ecef; border-radius:6px; overflow:hidden; margin-top:12px;}
+  #bar i{display:block; height:100%; width:0; background:var(--brand); transition:width .2s;}
+  #log{font-size:13px; color:var(--ink2); margin-top:8px; white-space:pre-wrap;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>GSC Sammel-Download</h1>
+  <p class="sub">Lädt die Search-Console-Daten mehrerer Kunden auf einmal und speichert pro Kunde eine Excel-Datei im Format des Report-Generators (alles zusammen als ZIP).</p>
+
+  <div class="card">
+    <h2>1. Anmelden</h2>
+    <div class="row">
+      <button class="primary" id="btn-login">Mit Google anmelden</button>
+      <span class="muted" id="login-status">Noch nicht angemeldet.</span>
+    </div>
+  </div>
+
+  <div class="card" id="card-sites" hidden>
+    <h2>2. Kunden und Zeitraum wählen</h2>
+    <div class="row">
+      <label>Zeitraum:
+        <select id="range">
+          <option value="3">letzte 3 Monate</option>
+          <option value="6">letzte 6 Monate</option>
+          <option value="12" selected>letzte 12 Monate</option>
+          <option value="16">letzte 16 Monate (Maximum)</option>
+        </select>
+      </label>
+      <input type="text" id="filter" placeholder="Kunden filtern …" style="min-width:200px;">
+      <button id="btn-all">Alle sichtbaren</button>
+      <button id="btn-none">Keine</button>
+    </div>
+    <label class="muted" style="display:block; margin-top:10px;"><input type="checkbox" id="prefer-domain" checked> Bei doppelten Properties (Domain und URL-Präfix) nur die Domain-Property anzeigen</label>
+    <div id="site-list"></div>
+    <div class="muted" id="count" style="margin-top:8px;"></div>
+  </div>
+
+  <div class="card" id="card-run" hidden>
+    <h2>3. Herunterladen</h2>
+    <div class="row">
+      <button class="primary" id="btn-run">Ausgewählte Kunden laden (ZIP)</button>
+      <button id="btn-stop" hidden>Abbrechen</button>
+    </div>
+    <div id="bar"><i></i></div>
+    <div id="log"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var CLIENT_ID = '1046410360925-4kq5ddhlpmcpea743v641kvlrd76fu16.apps.googleusercontent.com';
+  var SCOPE = 'https://www.googleapis.com/auth/webmasters.readonly';
+  var API = 'https://www.googleapis.com/webmasters/v3/sites';
+  var token = null, tokenClient = null, sites = [], stopFlag = false;
+
+  var COUNTRY = {afg:'Afghanistan',alb:'Albanien',dza:'Algerien',and:'Andorra',ago:'Angola',arg:'Argentinien',arm:'Armenien',aus:'Australien',aut:'Österreich',aze:'Aserbaidschan',bhr:'Bahrain',bgd:'Bangladesch',blr:'Belarus',bel:'Belgien',blz:'Belize',bol:'Bolivien',bih:'Bosnien und Herzegowina',bra:'Brasilien',bgr:'Bulgarien',khm:'Kambodscha',can:'Kanada',chl:'Chile',chn:'China',col:'Kolumbien',cri:'Costa Rica',hrv:'Kroatien',cub:'Kuba',cyp:'Zypern',cze:'Tschechien',dnk:'Dänemark',dom:'Dominikanische Republik',ecu:'Ecuador',egy:'Ägypten',est:'Estland',fin:'Finnland',fra:'Frankreich',geo:'Georgien',deu:'Deutschland',gha:'Ghana',grc:'Griechenland',gtm:'Guatemala',hkg:'Hongkong',hun:'Ungarn',isl:'Island',ind:'Indien',idn:'Indonesien',irn:'Iran',irq:'Irak',irl:'Irland',isr:'Israel',ita:'Italien',jam:'Jamaika',jpn:'Japan',jor:'Jordanien',kaz:'Kasachstan',ken:'Kenia',kwt:'Kuwait',lva:'Lettland',lbn:'Libanon',lie:'Liechtenstein',ltu:'Litauen',lux:'Luxemburg',mys:'Malaysia',mlt:'Malta',mex:'Mexiko',mda:'Moldau',mco:'Monaco',mne:'Montenegro',mar:'Marokko',nld:'Niederlande',nzl:'Neuseeland',nga:'Nigeria',mkd:'Nordmazedonien',nor:'Norwegen',omn:'Oman',pak:'Pakistan',pan:'Panama',pry:'Paraguay',per:'Peru',phl:'Philippinen',pol:'Polen',prt:'Portugal',qat:'Katar',rou:'Rumänien',rus:'Russland',sau:'Saudi-Arabien',srb:'Serbien',sgp:'Singapur',svk:'Slowakei',svn:'Slowenien',zaf:'Südafrika',kor:'Südkorea',esp:'Spanien',lka:'Sri Lanka',swe:'Schweden',che:'Schweiz',twn:'Taiwan',tha:'Thailand',tun:'Tunesien',tur:'Türkei',ukr:'Ukraine',are:'Vereinigte Arabische Emirate',gbr:'Vereinigtes Königreich',usa:'USA',ury:'Uruguay',uzb:'Usbekistan',ven:'Venezuela',vnm:'Vietnam',xkk:'Kosovo'};
+  var DEVICE = {DESKTOP:'Computer', MOBILE:'Mobil', TABLET:'Tablet'};
+
+  function $(id){ return document.getElementById(id); }
+  function setLogin(msg, isErr){ var el=$('login-status'); el.textContent=msg; el.style.color = isErr ? 'var(--bad)' : ''; }
+  function log(msg){ $('log').textContent = msg; }
+  function pad(n){ return (n<10?'0':'')+n; }
+  function iso(d){ return d.getUTCFullYear()+'-'+pad(d.getUTCMonth()+1)+'-'+pad(d.getUTCDate()); }
+  function sleep(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+
+  /* ---------- Login ---------- */
+  function ensureClient(cb){
+    if (!(window.google && google.accounts && google.accounts.oauth2)){
+      setLogin('Google-Login-Skript konnte nicht geladen werden. Seite neu laden und Adblocker für diese Seite ausschalten.', true); return;
+    }
+    if (!tokenClient){
+      tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: CLIENT_ID, scope: SCOPE,
+        callback: function(resp){
+          if (resp && resp.access_token){ token = resp.access_token; cb && cb(); }
+          else setLogin('Anmeldung fehlgeschlagen oder abgebrochen.', true);
+        },
+        error_callback: function(err){
+          setLogin('Anmeldung nicht möglich: ' + ((err && err.type) || 'unbekannter Fehler') + '. Ist dein Google-Konto als Testnutzer freigegeben und diese Seite als erlaubte Herkunft eingetragen?', true);
+        }
+      });
+    }
+    tokenClient.requestAccessToken({prompt: token ? '' : 'consent'});
+  }
+  $('btn-login').addEventListener('click', function(){
+    setLogin('Google-Login wird geöffnet …');
+    ensureClient(loadSites);
+  });
+
+  function api(url, opts){
+    opts = opts || {};
+    opts.headers = Object.assign({'Authorization':'Bearer '+token}, opts.headers||{});
+    function attempt(n){
+      return fetch(url, opts).then(function(res){
+        if (res.status === 401){ token = null; throw new Error('Sitzung abgelaufen – bitte neu anmelden.'); }
+        if ((res.status === 429 || res.status >= 500) && n < 4){ return sleep(1500*(n+1)).then(function(){ return attempt(n+1); }); }
+        return res.json().then(function(j){
+          if (!res.ok) throw new Error((j && j.error && j.error.message) || ('HTTP '+res.status));
+          return j;
+        });
+      });
+    }
+    return attempt(0);
+  }
+
+  /* ---------- Properties ---------- */
+  function prettySite(u){
+    if (u.indexOf('sc-domain:')===0) return u.slice(10);
+    return u.replace(/^https?:\/\/(www\.)?/,'').replace(/\/$/,'');
+  }
+  function loadSites(){
+    setLogin('Lade Properties …');
+    api(API).then(function(res){
+      var all = (res.siteEntry||[]).filter(function(s){ return s.permissionLevel && s.permissionLevel !== 'siteUnverifiedUser'; });
+      if (!all.length){ setLogin('Für dieses Google-Konto sind keine Properties hinterlegt.', true); return; }
+      sites = all.map(function(s){
+        return {url:s.siteUrl, label:prettySite(s.siteUrl), isDomain:s.siteUrl.indexOf('sc-domain:')===0, checked:false, state:''};
+      }).sort(function(a,b){ return a.label < b.label ? -1 : 1; });
+      setLogin('Angemeldet – ' + sites.length + ' Properties gefunden.');
+      $('card-sites').hidden = false; $('card-run').hidden = false;
+      renderSites();
+    }).catch(function(e){ setLogin(e.message, true); });
+  }
+  function visibleSites(){
+    var q = $('filter').value.trim().toLowerCase();
+    var prefer = $('prefer-domain').checked;
+    var domains = {};
+    sites.forEach(function(s){ if (s.isDomain) domains[s.label.replace(/^www\./,'')] = true; });
+    return sites.filter(function(s){
+      if (q && s.label.toLowerCase().indexOf(q)===-1) return false;
+      if (prefer && !s.isDomain && domains[s.label.replace(/^www\./,'').split('/')[0]] && s.label.indexOf('/')===-1) return false;
+      return true;
+    });
+  }
+  function renderSites(){
+    var vis = visibleSites();
+    $('site-list').innerHTML = vis.map(function(s){
+      var i = sites.indexOf(s);
+      return '<label class="site '+(s.state||'')+'"><input type="checkbox" data-i="'+i+'"'+(s.checked?' checked':'')+'> <span>'+s.label+'</span><small>'+(s.msg||(s.isDomain?'Domain-Property':'URL-Präfix'))+'</small></label>';
+    }).join('') || '<div class="site muted">Keine Treffer.</div>';
+    Array.prototype.forEach.call($('site-list').querySelectorAll('input'), function(cb){
+      cb.addEventListener('change', function(){ sites[+cb.getAttribute('data-i')].checked = cb.checked; updateCount(); });
+    });
+    updateCount();
+  }
+  function updateCount(){
+    var n = sites.filter(function(s){ return s.checked; }).length;
+    $('count').textContent = n + ' ausgewählt';
+    $('btn-run').disabled = !n;
+  }
+  $('filter').addEventListener('input', renderSites);
+  $('prefer-domain').addEventListener('change', renderSites);
+  $('btn-all').addEventListener('click', function(){ visibleSites().forEach(function(s){ s.checked = true; }); renderSites(); });
+  $('btn-none').addEventListener('click', function(){ sites.forEach(function(s){ s.checked = false; }); renderSites(); });
+
+  /* ---------- Daten laden ---------- */
+  function query(siteUrl, start, end, dims, paged){
+    var url = API + '/' + encodeURIComponent(siteUrl) + '/searchAnalytics/query';
+    var rows = [], startRow = 0, LIMIT = 25000, CAP = 50000;
+    function next(){
+      return api(url, {method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({startDate:start, endDate:end, dimensions:dims, rowLimit:LIMIT, startRow:startRow, dataState:'final'})
+      }).then(function(res){
+        var r = res.rows || [];
+        rows = rows.concat(r);
+        if (paged && r.length === LIMIT && rows.length < CAP){ startRow += LIMIT; return next(); }
+        return rows;
+      });
+    }
+    return next();
+  }
+  function toRows(header, rows, nameFn){
+    var out = [header];
+    rows.forEach(function(r){
+      out.push([nameFn(r.keys[0]), r.clicks, r.impressions, r.ctr, r.position]);
+    });
+    return out;
+  }
+  function buildWorkbook(res){
+    var head = function(first){ return [first,'Klicks','Impressionen','CTR','Position']; };
+    var wb = XLSX.utils.book_new();
+    function add(name, aoa){
+      var ws = XLSX.utils.aoa_to_sheet(aoa);
+      for (var R=1; R<aoa.length; R++){
+        var cell = ws[XLSX.utils.encode_cell({r:R, c:3})];
+        if (cell){ cell.t='n'; cell.z='0.0%'; }
+        var pc = ws[XLSX.utils.encode_cell({r:R, c:4})];
+        if (pc){ pc.z='0.0'; }
+      }
+      XLSX.utils.book_append_sheet(wb, ws, name);
+    }
+    add('Diagramm', toRows(head('Datum'), res.dates.slice().sort(function(a,b){ return a.keys[0] < b.keys[0] ? -1 : 1; }), function(k){ return k; }));
+    add('Suchanfragen', toRows(head('Top-Suchanfragen'), res.queries, function(k){ return k; }));
+    add('Seiten', toRows(head('Top-Seiten'), res.pages, function(k){ return k; }));
+    add('Länder', toRows(head('Land'), res.countries, function(k){ return COUNTRY[k] || String(k).toUpperCase(); }));
+    add('Geräte', toRows(head('Gerät'), res.devices, function(k){ return DEVICE[k] || k; }));
+    return wb;
+  }
+  function loadSite(site, start, end){
+    return Promise.all([
+      query(site.url, start, end, ['date'], false),
+      query(site.url, start, end, ['query'], true),
+      query(site.url, start, end, ['page'], true),
+      query(site.url, start, end, ['country'], false),
+      query(site.url, start, end, ['device'], false)
+    ]).then(function(a){
+      return {dates:a[0], queries:a[1], pages:a[2], countries:a[3], devices:a[4]};
+    });
+  }
+  function safeName(s){ return s.replace(/[^a-z0-9.\-]+/gi,'_').replace(/^_+|_+$/g,'') || 'kunde'; }
+
+  $('btn-run').addEventListener('click', function(){
+    var sel = sites.filter(function(s){ return s.checked; });
+    if (!sel.length) return;
+    var months = +$('range').value || 12;
+    var endD = new Date(); endD.setUTCDate(endD.getUTCDate()-2);           // GSC-Daten sind ca. 2 Tage verzögert
+    var startD = new Date(Date.UTC(endD.getUTCFullYear(), endD.getUTCMonth()-months, endD.getUTCDate()+1));
+    var start = iso(startD), end = iso(endD);
+    var zip = new JSZip(), done = 0, ok = 0, fail = 0;
+    stopFlag = false;
+    $('btn-run').disabled = true; $('btn-stop').hidden = false;
+    sel.forEach(function(s){ s.state=''; s.msg=''; });
+    renderSites();
+
+    function finish(){
+      $('btn-stop').hidden = true; $('btn-run').disabled = false;
+      if (!ok){ log('Es konnte kein Kunde geladen werden.'); return Promise.resolve(); }
+      log('Erstelle ZIP-Datei …');
+      return zip.generateAsync({type:'blob'}).then(function(blob){
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'GSC-Export_' + iso(new Date()) + '.zip';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000);
+        log('Fertig: ' + ok + ' Kunde(n) geladen' + (fail ? (', ' + fail + ' mit Fehler') : '') + '. Zeitraum ' + start + ' bis ' + end + '.');
+      });
+    }
+    function step(i){
+      if (i >= sel.length || stopFlag) return finish();
+      var s = sel[i];
+      s.state='run'; s.msg='lädt …'; renderSites();
+      log('Lade ' + s.label + ' (' + (i+1) + ' von ' + sel.length + ') …');
+      return loadSite(s, start, end).then(function(res){
+        if (!res.dates.length){ s.state='err'; s.msg='keine Daten im Zeitraum'; fail++; return; }
+        var wb = buildWorkbook(res);
+        var data = XLSX.write(wb, {type:'array', bookType:'xlsx'});
+        zip.file(safeName(s.label) + '_' + start + '_bis_' + end + '.xlsx', data);
+        s.state='ok'; s.msg='fertig (' + res.dates.length + ' Tage, ' + res.queries.length + ' Suchanfragen)'; ok++;
+      }).catch(function(e){
+        s.state='err'; s.msg=e.message; fail++;
+        if (/Sitzung abgelaufen/.test(e.message)) stopFlag = true;
+      }).then(function(){
+        done++; $('bar').firstElementChild.style.width = Math.round(done/sel.length*100)+'%';
+        renderSites();
+        return step(i+1);
+      });
+    }
+    $('bar').firstElementChild.style.width = '0';
+    step(0);
+  });
+  $('btn-stop').addEventListener('click', function(){ stopFlag = true; });
+})();
+</script>
+</body>
+</html>
